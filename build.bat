@@ -30,7 +30,7 @@ IF DEFINED MINSDKVERSION (
 )
 
 @REM Initialize ANDROID_ABIS
-SET ANDROID_ABIS=x86_64 arm64-v8a
+SET ANDROID_ABIS=armeabi-v7a arm64-v8a x86 x86_64
 
 @REM Check cmake tools
 WHERE /Q cmake
