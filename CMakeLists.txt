@@ -32,9 +32,19 @@ set_target_properties(test PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "libs/${ANDROID_ABI}"
 )
 
-# Build test-ui program
+# Build test-ui programs
 add_executable(test-ui src/test-ui/main.cc ${COMMON_SOURCES} ${IMGUI_SOURCES} ${IMGUI_BACKENDS_SOURCES})
 target_link_libraries(test-ui ${liblog} EGL GLESv3 android)
 set_target_properties(test-ui PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "tests/${ANDROID_ABI}"
+)
+add_executable(canvas-ui src/test-ui/canvas.cc ${COMMON_SOURCES} ${IMGUI_SOURCES} ${IMGUI_BACKENDS_SOURCES})
+target_link_libraries(canvas-ui ${liblog} EGL GLESv3 android)
+set_target_properties(canvas-ui PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "tests/${ANDROID_ABI}"
+)
+add_executable(render-ui src/test-ui/render.cc ${COMMON_SOURCES} ${IMGUI_SOURCES} ${IMGUI_BACKENDS_SOURCES})
+target_link_libraries(render-ui ${liblog} EGL GLESv3 android)
+set_target_properties(render-ui PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "tests/${ANDROID_ABI}"
 )
