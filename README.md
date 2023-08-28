@@ -29,5 +29,7 @@
 
 #### IPC使用
 
-Server：[src/test-ui/canvas.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main-ipc/src/test-ui/canvas.cc)
-Client：[src/test-ui/render.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main-ipc/src/test-ui/render.cc)
+1. Server：[src/test-ui/canvas.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main-ipc/src/test-ui/canvas.cc)
+2. Client：[src/test-ui/render.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main-ipc/src/test-ui/render.cc)
+
+[screenshot.webm](https://github.com/Bzi-Han/AndroidSurfaceImgui/assets/75075077/7b6f7adc-2b68-44d1-bf7a-53bcf0a151a3)
