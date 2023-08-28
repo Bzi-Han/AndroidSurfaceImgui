@@ -56,7 +56,7 @@ namespace android
         }
         else if (RenderType::RenderServer == m_renderType)
         {
-            if (!m_renderDataReadLock)
+            if (RenderState::Rendering == m_renderState)
             {
                 auto drawData = ImGui::RenderSharedDrawData(m_serverRenderData);
                 if (nullptr != drawData)
@@ -65,7 +65,7 @@ namespace android
                     ImGui_ImplOpenGL3_RenderDrawData(drawData);
                     eglSwapBuffers(m_defaultDisplay, m_eglSurface);
                 }
-                m_renderCompleteSignal.notify_one();
+                m_renderState = RenderState::ReadData;
             }
         }
         else if (RenderType::RenderNative == m_renderType)
@@ -80,6 +80,9 @@ namespace android
     void AImGui::ProcessInputEvent()
     {
         static ATouchEvent::TouchEvent event{};
+
+        if (!m_state)
+            return;
 
         if (RenderType::RenderServer == m_renderType || RenderType::RenderNative == m_renderType)
         {
@@ -133,11 +136,12 @@ namespace android
     bool AImGui::InitEnvironment()
     {
         // Initialize rpc
-        m_transportAddress.sun_family = AF_UNIX;
-        strcpy(m_transportAddress.sun_path, "/data/local/tmp/socket.RenderService.AImGui");
+        m_transportAddress.sin_family = AF_INET;
+        inet_pton(AF_INET, "127.0.0.1", &m_transportAddress.sin_addr);
+        m_transportAddress.sin_port = htons(16888);
         if (RenderType::RenderClient == m_renderType)
         {
-            m_clientFd = socket(AF_UNIX, SOCK_STREAM, 0);
+            m_clientFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
             if (0 > m_clientFd)
             {
                 LogDebug("[-] Client fd create failed, m_clientFd:%d", m_clientFd);
@@ -152,7 +156,7 @@ namespace android
         }
         else if (RenderType::RenderServer == m_renderType)
         {
-            m_serverFd = socket(AF_UNIX, SOCK_STREAM, 0);
+            m_serverFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
             if (0 > m_serverFd)
             {
                 LogDebug("[-] Server fd create failed, m_serverFd:%d", m_serverFd);
@@ -351,23 +355,19 @@ namespace android
                 break;
             }
 
-            m_renderDataReadLock = true;
-            if (m_serverRenderData.size() < packetSize)
-                m_serverRenderData.resize(packetSize);
-            auto readResult = ReadData(m_serverRenderData.data(), packetSize);
+            if (m_serverRenderDataBack.size() < packetSize)
+                m_serverRenderDataBack.resize(packetSize);
+            auto readResult = ReadData(m_serverRenderDataBack.data(), packetSize);
             if (0 >= readResult)
             {
                 LogDebug("[-] Client disconnect or read failed, readResult:%d  %d:%s", readResult, errno, strerror(errno));
                 break;
             }
-            m_renderDataReadLock = false;
 
-            // Wait for rendering complete
-            {
-                std::unique_lock<std::mutex> locker(m_renderingMutex);
-
-                m_renderCompleteSignal.wait(locker);
-            }
+            if (RenderState::Rendering == m_renderState)
+                continue;
+            m_serverRenderData.swap(m_serverRenderDataBack);
+            m_renderState = RenderState::Rendering;
         }
 
         m_state = false;

@@ -12,7 +12,8 @@
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 #include <sys/socket.h>
-#include <sys/un.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <thread>
 #include <memory>
@@ -31,6 +32,12 @@ namespace android
             RenderNative,
             RenderServer,
             RenderClient,
+        };
+
+        enum class RenderState
+        {
+            Rendering,
+            ReadData,
         };
 
     public:
@@ -65,13 +72,11 @@ namespace android
 
         RenderType m_renderType;
         size_t m_maxPacketSize = 1 * 1024 * 1024; // 1MB
-        sockaddr_un m_transportAddress{};
+        sockaddr_in m_transportAddress{};
         int m_serverFd, m_clientFd;
         std::unique_ptr<std::thread> m_serverWorkerThread;
-        std::vector<uint8_t> m_serverRenderData;
-        std::atomic_bool m_renderDataReadLock = false;
-        std::mutex m_renderingMutex;
-        std::condition_variable m_renderCompleteSignal;
+        std::vector<uint8_t> m_serverRenderData, m_serverRenderDataBack;
+        std::atomic<RenderState> m_renderState = RenderState::ReadData;
 
         ANativeWindow *m_nativeWindow = nullptr;
         EGLDisplay m_defaultDisplay = EGL_NO_DISPLAY;

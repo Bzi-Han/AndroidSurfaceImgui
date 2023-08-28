@@ -2,7 +2,7 @@
 
 #### 介绍
 
-这是IPC分支，使用的是`unix domain socket`进行数据交换来远程绘制。
+支持RPC进行多进程/远程绘制。
 
 在Android使用上API创建Surface并进行[Dear ImGui](https://github.com/ocornut/imgui.git)的绘制。
 
@@ -23,13 +23,13 @@
 
 #### 使用
 
-例子请看：[src/test-ui/main.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main-ipc/src/test-ui/main.cc)
+例子请看：[src/test-ui/main.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main/src/test-ui/main.cc)
 
-![screenshot.jpg](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main-ipc/screenshot.jpg)
+![screenshot.jpg](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main/screenshot.jpg)
 
-#### IPC使用
+#### RPC使用
 
-1. Server：[src/test-ui/canvas.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main-ipc/src/test-ui/canvas.cc)
-2. Client：[src/test-ui/render.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main-ipc/src/test-ui/render.cc)
+1. Server：[src/test-ui/canvas.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main/src/test-ui/canvas.cc)
+2. Client：[src/test-ui/render.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main/src/test-ui/render.cc)
 
 [screenshot.webm](https://github.com/Bzi-Han/AndroidSurfaceImgui/assets/75075077/7b6f7adc-2b68-44d1-bf7a-53bcf0a151a3)
