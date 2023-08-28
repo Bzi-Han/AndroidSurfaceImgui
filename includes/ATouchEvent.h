@@ -102,7 +102,7 @@ namespace android
     class ATouchEvent
     {
     public:
-        enum class EventType
+        enum class EventType : uint32_t
         {
             move,
             touchDown,

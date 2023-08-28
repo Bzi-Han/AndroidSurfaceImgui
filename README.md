@@ -2,6 +2,8 @@
 
 #### 介绍
 
+这是IPC分支，使用的是`unix domain socket`进行数据交换来远程绘制。
+
 在Android使用上API创建Surface并进行[Dear ImGui](https://github.com/ocornut/imgui.git)的绘制。
 
 **注意**：如果拥有Surface的进程的用户权限在`shell`之下，则你的Surface不会被系统添加到根视图，也就是不会显示出来，详情请看：[SurfaceFlinger.cpp](https://cs.android.com/android/platform/superproject/main/+/main:frameworks/native/services/surfaceflinger/SurfaceFlinger.cpp;l=4769)
@@ -21,6 +23,11 @@
 
 #### 使用
 
-例子请看：[src/test/main.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main/src/test-ui/main.cc)
+例子请看：[src/test-ui/main.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main-ipc/src/test-ui/main.cc)
 
-![screenshot.jpg](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main/screenshot.jpg)
+![screenshot.jpg](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main-ipc/screenshot.jpg)
+
+#### IPC使用
+
+Server：[src/test-ui/canvas.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main-ipc/src/test-ui/canvas.cc)
+Client：[src/test-ui/render.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main-ipc/src/test-ui/render.cc)
