@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <linux/input.h>
+#include <android/keycodes.h>
 
 #include <array>
 #include <bitset>
@@ -104,9 +105,12 @@ namespace android
     public:
         enum class EventType : uint32_t
         {
-            move,
-            touchDown,
-            touchUp,
+            Move,
+            TouchDown,
+            TouchUp,
+            KeyDown,
+            KeyUp,
+            Wheel,
         };
 
         struct TouchEvent
@@ -114,6 +118,8 @@ namespace android
             EventType type;
             int x;
             int y;
+            int scanCode;
+            int keyCode;
 
             void TransformToScreen(int width, int height, int theta = 0)
             {
