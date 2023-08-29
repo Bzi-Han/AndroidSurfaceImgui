@@ -14,6 +14,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <android/keycodes.h>
 
 #include <thread>
 #include <memory>
