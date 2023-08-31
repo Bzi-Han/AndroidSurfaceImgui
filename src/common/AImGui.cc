@@ -693,6 +693,8 @@ namespace android
     }
     void AImGui::UnInitEnvironment()
     {
+        m_state = false;
+
         if (nullptr != m_imguiContext)
         {
             ImGui_ImplOpenGL3_Shutdown();
@@ -713,7 +715,10 @@ namespace android
         }
 
         if (nullptr != m_nativeWindow)
+        {
             ANativeWindow_release(m_nativeWindow);
+            android::ANativeWindowCreator::Destroy(m_nativeWindow);
+        }
 
         close(m_clientFd);
         close(m_serverFd);
@@ -723,7 +728,6 @@ namespace android
         m_eglSurface = EGL_NO_SURFACE;
         m_defaultDisplay = EGL_NO_DISPLAY;
         m_nativeWindow = nullptr;
-        m_state = false;
     }
 
     void AImGui::ServerWorker()
