@@ -4,7 +4,8 @@
 
 + 支持RPC进行多进程/远程绘制。
 + 支持鼠标滚轮
-+ 支持键盘输入
++ 支持物理键盘输入
++ 支持横/竖屏自动切换
 
 在Android使用上API创建Surface并进行[Dear ImGui](https://github.com/ocornut/imgui.git)的绘制。
 

@@ -5,6 +5,7 @@
 #include <dlfcn.h>
 
 #include <cstddef>
+#include <unordered_map>
 
 namespace android
 {
@@ -44,8 +45,6 @@ namespace android
             };
         }
 
-        struct RefBase;
-
         struct String8;
 
         struct LayerMetadata;
@@ -57,7 +56,7 @@ namespace android
         struct SurfaceComposerClient;
 
         template <typename any_t>
-        struct sp
+        struct StrongPointer
         {
             union
             {
@@ -82,12 +81,13 @@ namespace android
 
             void (*SurfaceComposerClient__Constructor)(void *thiz) = nullptr;
             void (*SurfaceComposerClient__Destructor)(void *thiz) = nullptr;
-            sp<void> (*SurfaceComposerClient__CreateSurface)(void *thiz, void *name, uint32_t w, uint32_t h, int32_t format, uint32_t flags, void *parentHandle, void *layerMetadata, uint32_t *outTransformHint) = nullptr;
-            sp<void> (*SurfaceComposerClient__GetInternalDisplayToken)() = nullptr;
-            int32_t (*SurfaceComposerClient__GetDisplayState)(sp<void> &display, ui::DisplayState *displayState) = nullptr;
+            StrongPointer<void> (*SurfaceComposerClient__CreateSurface)(void *thiz, void *name, uint32_t w, uint32_t h, int32_t format, uint32_t flags, void *parentHandle, void *layerMetadata, uint32_t *outTransformHint) = nullptr;
+            StrongPointer<void> (*SurfaceComposerClient__GetInternalDisplayToken)() = nullptr;
+            int32_t (*SurfaceComposerClient__GetDisplayState)(StrongPointer<void> &display, ui::DisplayState *displayState) = nullptr;
 
             int32_t (*SurfaceControl__Validate)(void *thiz) = nullptr;
-            sp<Surface> (*SurfaceControl__GetSurface)(void *thiz) = nullptr;
+            StrongPointer<Surface> (*SurfaceControl__GetSurface)(void *thiz) = nullptr;
+            void (*SurfaceControl__DisConnect)(void *thiz) = nullptr;
 
             Functionals()
             {
@@ -114,38 +114,29 @@ namespace android
 
                 SurfaceControl__Validate = reinterpret_cast<decltype(SurfaceControl__Validate)>(dlsym(libgui, "_ZNK7android14SurfaceControl8validateEv"));
                 SurfaceControl__GetSurface = reinterpret_cast<decltype(SurfaceControl__GetSurface)>(dlsym(libgui, "_ZN7android14SurfaceControl10getSurfaceEv"));
+                SurfaceControl__DisConnect = reinterpret_cast<decltype(SurfaceControl__DisConnect)>(dlsym(libgui, "_ZN7android14SurfaceControl10disconnectEv"));
+            }
+
+            static const Functionals &GetInstance()
+            {
+                static Functionals functionals;
+
+                return functionals;
             }
         };
 
-        struct RefBase : Functionals
-        {
-            void *base;
-
-            RefBase(void *base) : base(base) {}
-
-            void IncStrong()
-            {
-                RefBase__IncStrong(base, this);
-            }
-
-            void DecStrong()
-            {
-                RefBase__DecStrong(base, this);
-            }
-        };
-
-        struct String8 : Functionals
+        struct String8
         {
             char data[1024];
 
             String8(const char *const string)
             {
-                String8__Constructor(data, string);
+                Functionals::GetInstance().String8__Constructor(data, string);
             }
 
             ~String8()
             {
-                String8__Destructor(data);
+                Functionals::GetInstance().String8__Destructor(data);
             }
 
             operator void *()
@@ -154,13 +145,13 @@ namespace android
             }
         };
 
-        struct LayerMetadata : Functionals
+        struct LayerMetadata
         {
             char data[1024];
 
             LayerMetadata()
             {
-                LayerMetadata__Constructor(data);
+                Functionals::GetInstance().LayerMetadata__Constructor(data);
             }
 
             operator void *()
@@ -173,39 +164,58 @@ namespace android
         {
         };
 
-        struct SurfaceControl : Functionals
+        struct SurfaceControl
         {
             void *data;
 
+            SurfaceControl() : data(nullptr) {}
             SurfaceControl(void *data) : data(data) {}
 
             int32_t Validate()
             {
-                return SurfaceControl__Validate(data);
+                if (nullptr == data)
+                    return 0;
+
+                return Functionals::GetInstance().SurfaceControl__Validate(data);
             }
 
             Surface *GetSurface()
             {
-                auto result = SurfaceControl__GetSurface(data);
+                if (nullptr == data)
+                    return nullptr;
+
+                auto result = Functionals::GetInstance().SurfaceControl__GetSurface(data);
 
                 return reinterpret_cast<Surface *>(reinterpret_cast<size_t>(result.pointer) + 16);
             }
+
+            void DisConnect()
+            {
+                if (nullptr == data)
+                    return;
+
+                Functionals::GetInstance().SurfaceControl__DisConnect(data);
+            }
+
+            void DestroySurface(Surface *surface)
+            {
+                if (nullptr == data || nullptr == surface)
+                    return;
+
+                Functionals::GetInstance().RefBase__DecStrong(reinterpret_cast<Surface *>(reinterpret_cast<size_t>(surface) - 16), this);
+                DisConnect();
+                Functionals::GetInstance().RefBase__DecStrong(data, this);
+            }
         };
 
-        struct SurfaceComposerClient : RefBase
+        struct SurfaceComposerClient
         {
             char data[1024];
 
             SurfaceComposerClient()
-                : RefBase(data)
             {
-                SurfaceComposerClient__Constructor(data);
-                IncStrong();
-            }
-
-            ~SurfaceComposerClient()
-            {
-                DecStrong();
+                Functionals::GetInstance().SurfaceComposerClient__Constructor(data);
+                Functionals::GetInstance().RefBase__IncStrong(data, this);
             }
 
             SurfaceControl CreateSurface(const char *name, int32_t width, int32_t height)
@@ -214,19 +224,19 @@ namespace android
                 String8 windowName(name);
                 LayerMetadata layerMetadata;
 
-                auto result = SurfaceComposerClient__CreateSurface(data, windowName, width, height, 1, 0, &parentHandle, layerMetadata, nullptr);
+                auto result = Functionals::GetInstance().SurfaceComposerClient__CreateSurface(data, windowName, width, height, 1, 0, &parentHandle, layerMetadata, nullptr);
 
                 return {result.get()};
             }
 
             bool GetDisplayInfo(ui::DisplayState *displayInfo)
             {
-                auto defaultDisplay = SurfaceComposerClient__GetInternalDisplayToken();
+                auto defaultDisplay = Functionals::GetInstance().SurfaceComposerClient__GetInternalDisplayToken();
 
                 if (nullptr == defaultDisplay.get())
                     return false;
 
-                return 0 == SurfaceComposerClient__GetDisplayState(defaultDisplay, displayInfo);
+                return 0 == Functionals::GetInstance().SurfaceComposerClient__GetDisplayState(defaultDisplay, displayInfo);
             }
         };
 
@@ -283,9 +293,23 @@ namespace android
             }
 
             auto surfaceControl = surfaceComposerClient.CreateSurface(name, width, height);
+            auto nativeWindow = reinterpret_cast<ANativeWindow *>(surfaceControl.GetSurface());
 
-            return reinterpret_cast<ANativeWindow *>(surfaceControl.GetSurface());
+            m_cachedSurfaceControl.emplace(nativeWindow, std::move(surfaceControl));
+            return nativeWindow;
         }
+
+        static void Destroy(ANativeWindow *nativeWindow)
+        {
+            if (!m_cachedSurfaceControl.contains(nativeWindow))
+                return;
+
+            m_cachedSurfaceControl[nativeWindow].DestroySurface(reinterpret_cast<detail::Surface *>(nativeWindow));
+            m_cachedSurfaceControl.erase(nativeWindow);
+        }
+
+    private:
+        inline static std::unordered_map<ANativeWindow *, detail::SurfaceControl> m_cachedSurfaceControl;
     };
 }
 

@@ -6,7 +6,7 @@
 
 int main()
 {
-    android::AImGui imgui;
+    android::AImGui imgui(android::AImGui::RenderType::RenderNative, true);
     bool state = true, showDemoWindow = false, showAnotherWindow = false;
     ImVec4 clearColor(0.45f, 0.55f, 0.60f, 1.00f);
 
