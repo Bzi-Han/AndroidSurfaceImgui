@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.0.0)
 project(AndroidSurfaceImgui)
 
 set(CMAKE_CXX_STANDARD 20)
+add_compile_options(-fno-rtti)
+add_link_options(-s)
 
 find_library(liblog log)
 

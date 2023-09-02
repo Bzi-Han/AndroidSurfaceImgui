@@ -1,10 +1,6 @@
 #ifndef A_IMGUI_H // !A_IMGUI_H
 #define A_IMGUI_H
 
-#include "Global.h"
-#include "ANativeWindowCreator.h"
-#include "ATouchEvent.h"
-
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_android.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
@@ -37,6 +33,7 @@ namespace android
 
         enum class RenderState
         {
+            SetFont,
             Rendering,
             ReadData,
         };
@@ -76,6 +73,7 @@ namespace android
         sockaddr_in m_transportAddress{};
         int m_serverFd, m_clientFd;
         std::unique_ptr<std::thread> m_serverWorkerThread;
+        std::vector<uint8_t> m_serverFontData;
         std::vector<uint8_t> m_serverRenderData, m_serverRenderDataBack;
         std::atomic<RenderState> m_renderState = RenderState::ReadData;
 

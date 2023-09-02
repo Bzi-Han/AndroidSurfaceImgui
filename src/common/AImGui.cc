@@ -1,5 +1,9 @@
 #include "AImGui.h"
 
+#include "Global.h"
+#include "ANativeWindowCreator.h"
+#include "ATouchEvent.h"
+
 #include <ImGui-SharedDrawData/modules/ImGuiSharedDrawData.h>
 
 static ImGuiKey KeyCodeToImGuiKey(int32_t keyCode)
@@ -416,7 +420,18 @@ namespace android
         }
         else if (RenderType::RenderServer == m_renderType)
         {
-            if (RenderState::Rendering == m_renderState)
+            switch (m_renderState)
+            {
+            case RenderState::SetFont:
+            {
+                ImGui_ImplOpenGL3_DestroyFontsTexture();
+                ImGui::SetSharedFontData(m_serverFontData);
+                ImGui_ImplOpenGL3_CreateFontsTexture();
+                m_renderState = RenderState::ReadData;
+
+                break;
+            }
+            case RenderState::Rendering:
             {
                 auto drawData = ImGui::RenderSharedDrawData(m_serverRenderData);
                 if (nullptr != drawData)
@@ -426,6 +441,11 @@ namespace android
                     eglSwapBuffers(m_defaultDisplay, m_eglSurface);
                 }
                 m_renderState = RenderState::ReadData;
+
+                break;
+            }
+            default:
+                break;
             }
         }
         else if (RenderType::RenderNative == m_renderType)
@@ -662,14 +682,22 @@ namespace android
         }
 
         auto &imguiIO = ImGui::GetIO();
+
         imguiIO.IniFilename = nullptr;
+        ImGui::StyleColorsDark();
+        ImGui::GetStyle().ScaleAllSizes(3.f);
 
         ImFontConfig fontConfig;
         fontConfig.SizePixels = 22.f;
         imguiIO.Fonts->AddFontDefault(&fontConfig);
-
-        ImGui::StyleColorsDark();
-        ImGui::GetStyle().ScaleAllSizes(3.f);
+        if (RenderType::RenderClient == m_renderType)
+        {
+            auto sharedFontData = ImGui::GetSharedFontData();
+            uint32_t packetSize = static_cast<uint32_t>(sharedFontData.size());
+            // First packet
+            WriteData(&packetSize, sizeof(packetSize));
+            WriteData(sharedFontData.data(), sharedFontData.size());
+        }
 
         if (!ImGui_ImplAndroid_Init(m_nativeWindow))
         {
@@ -763,10 +791,18 @@ namespace android
                 break;
             }
 
-            if (RenderState::Rendering == m_renderState)
+            if (RenderState::ReadData != m_renderState)
                 continue;
-            m_serverRenderData.swap(m_serverRenderDataBack);
-            m_renderState = RenderState::Rendering;
+            if (m_serverFontData.empty()) // NOTE: First packet is font data
+            {
+                m_serverFontData.swap(m_serverRenderDataBack);
+                m_renderState = RenderState::SetFont;
+            }
+            else
+            {
+                m_serverRenderData.swap(m_serverRenderDataBack);
+                m_renderState = RenderState::Rendering;
+            }
         }
 
         m_state = false;
