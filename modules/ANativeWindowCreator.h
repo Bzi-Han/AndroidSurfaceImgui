@@ -71,6 +71,13 @@ namespace android
 
         struct Functionals
         {
+            struct SymbolMethod
+            {
+                void *(*Open)(const char *filename, int flag) = nullptr;
+                void *(*Find)(void *handle, const char *symbol) = nullptr;
+                int (*Close)(void *handle) = nullptr;
+            };
+
             void (*RefBase__IncStrong)(void *thiz, void *id) = nullptr;
             void (*RefBase__DecStrong)(void *thiz, void *id) = nullptr;
 
@@ -89,37 +96,40 @@ namespace android
             StrongPointer<Surface> (*SurfaceControl__GetSurface)(void *thiz) = nullptr;
             void (*SurfaceControl__DisConnect)(void *thiz) = nullptr;
 
-            Functionals()
+            Functionals(const SymbolMethod &symbolMethod)
             {
 #ifdef __LP64__
-                static auto libgui = dlopen("/system/lib64/libgui.so", RTLD_LAZY);
-                static auto libutils = dlopen("/system/lib64/libutils.so", RTLD_LAZY);
+                static auto libgui = symbolMethod.Open("/system/lib64/libgui.so", RTLD_LAZY);
+                static auto libutils = symbolMethod.Open("/system/lib64/libutils.so", RTLD_LAZY);
 #else
-                static auto libgui = dlopen("/system/lib/libgui.so", RTLD_LAZY);
-                static auto libutils = dlopen("/system/lib/libutils.so", RTLD_LAZY);
+                static auto libgui = symbolMethod.Open("/system/lib/libgui.so", RTLD_LAZY);
+                static auto libutils = symbolMethod.Open("/system/lib/libutils.so", RTLD_LAZY);
 #endif
 
-                RefBase__IncStrong = reinterpret_cast<decltype(RefBase__IncStrong)>(dlsym(libutils, "_ZNK7android7RefBase9incStrongEPKv"));
-                RefBase__DecStrong = reinterpret_cast<decltype(RefBase__DecStrong)>(dlsym(libutils, "_ZNK7android7RefBase9decStrongEPKv"));
+                RefBase__IncStrong = reinterpret_cast<decltype(RefBase__IncStrong)>(symbolMethod.Find(libutils, "_ZNK7android7RefBase9incStrongEPKv"));
+                RefBase__DecStrong = reinterpret_cast<decltype(RefBase__DecStrong)>(symbolMethod.Find(libutils, "_ZNK7android7RefBase9decStrongEPKv"));
 
-                String8__Constructor = reinterpret_cast<decltype(String8__Constructor)>(dlsym(libutils, "_ZN7android7String8C2EPKc"));
-                String8__Destructor = reinterpret_cast<decltype(String8__Destructor)>(dlsym(libutils, "_ZN7android7String8D2Ev"));
+                String8__Constructor = reinterpret_cast<decltype(String8__Constructor)>(symbolMethod.Find(libutils, "_ZN7android7String8C2EPKc"));
+                String8__Destructor = reinterpret_cast<decltype(String8__Destructor)>(symbolMethod.Find(libutils, "_ZN7android7String8D2Ev"));
 
-                LayerMetadata__Constructor = reinterpret_cast<decltype(LayerMetadata__Constructor)>(dlsym(libgui, "_ZN7android13LayerMetadataC2Ev"));
+                LayerMetadata__Constructor = reinterpret_cast<decltype(LayerMetadata__Constructor)>(symbolMethod.Find(libgui, "_ZN7android13LayerMetadataC2Ev"));
 
-                SurfaceComposerClient__Constructor = reinterpret_cast<decltype(SurfaceComposerClient__Constructor)>(dlsym(libgui, "_ZN7android21SurfaceComposerClientC2Ev"));
-                SurfaceComposerClient__CreateSurface = reinterpret_cast<decltype(SurfaceComposerClient__CreateSurface)>(dlsym(libgui, "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8EjjijRKNS_2spINS_7IBinderEEENS_13LayerMetadataEPj"));
-                SurfaceComposerClient__GetInternalDisplayToken = reinterpret_cast<decltype(SurfaceComposerClient__GetInternalDisplayToken)>(dlsym(libgui, "_ZN7android21SurfaceComposerClient23getInternalDisplayTokenEv"));
-                SurfaceComposerClient__GetDisplayState = reinterpret_cast<decltype(SurfaceComposerClient__GetDisplayState)>(dlsym(libgui, "_ZN7android21SurfaceComposerClient15getDisplayStateERKNS_2spINS_7IBinderEEEPNS_2ui12DisplayStateE"));
+                SurfaceComposerClient__Constructor = reinterpret_cast<decltype(SurfaceComposerClient__Constructor)>(symbolMethod.Find(libgui, "_ZN7android21SurfaceComposerClientC2Ev"));
+                SurfaceComposerClient__CreateSurface = reinterpret_cast<decltype(SurfaceComposerClient__CreateSurface)>(symbolMethod.Find(libgui, "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8EjjijRKNS_2spINS_7IBinderEEENS_13LayerMetadataEPj"));
+                SurfaceComposerClient__GetInternalDisplayToken = reinterpret_cast<decltype(SurfaceComposerClient__GetInternalDisplayToken)>(symbolMethod.Find(libgui, "_ZN7android21SurfaceComposerClient23getInternalDisplayTokenEv"));
+                SurfaceComposerClient__GetDisplayState = reinterpret_cast<decltype(SurfaceComposerClient__GetDisplayState)>(symbolMethod.Find(libgui, "_ZN7android21SurfaceComposerClient15getDisplayStateERKNS_2spINS_7IBinderEEEPNS_2ui12DisplayStateE"));
 
-                SurfaceControl__Validate = reinterpret_cast<decltype(SurfaceControl__Validate)>(dlsym(libgui, "_ZNK7android14SurfaceControl8validateEv"));
-                SurfaceControl__GetSurface = reinterpret_cast<decltype(SurfaceControl__GetSurface)>(dlsym(libgui, "_ZN7android14SurfaceControl10getSurfaceEv"));
-                SurfaceControl__DisConnect = reinterpret_cast<decltype(SurfaceControl__DisConnect)>(dlsym(libgui, "_ZN7android14SurfaceControl10disconnectEv"));
+                SurfaceControl__Validate = reinterpret_cast<decltype(SurfaceControl__Validate)>(symbolMethod.Find(libgui, "_ZNK7android14SurfaceControl8validateEv"));
+                SurfaceControl__GetSurface = reinterpret_cast<decltype(SurfaceControl__GetSurface)>(symbolMethod.Find(libgui, "_ZN7android14SurfaceControl10getSurfaceEv"));
+                SurfaceControl__DisConnect = reinterpret_cast<decltype(SurfaceControl__DisConnect)>(symbolMethod.Find(libgui, "_ZN7android14SurfaceControl10disconnectEv"));
+
+                symbolMethod.Close(libutils);
+                symbolMethod.Close(libgui);
             }
 
-            static const Functionals &GetInstance()
+            static const Functionals &GetInstance(const SymbolMethod &symbolMethod = {.Open = dlopen, .Find = dlsym, .Close = dlclose})
             {
-                static Functionals functionals;
+                static Functionals functionals(symbolMethod);
 
                 return functionals;
             }
