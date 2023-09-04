@@ -368,9 +368,8 @@ static unsigned int KeyCodeToCharacter(int32_t keyCode, bool upperCase)
 
 namespace android
 {
-    AImGui::AImGui(RenderType renderType, bool autoUpdateOrientation)
-        : m_renderType(renderType),
-          m_autoUpdateOrientation(autoUpdateOrientation)
+    AImGui::AImGui(const Options &options)
+        : m_options(options)
     {
         InitEnvironment();
     }
@@ -385,7 +384,7 @@ namespace android
         if (!m_state)
             return;
 
-        if (m_autoUpdateOrientation)
+        if (m_options.autoUpdateOrientation)
         {
             auto displayInfo = ANativeWindowCreator::GetDisplayInfo();
 
@@ -399,7 +398,7 @@ namespace android
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplAndroid_NewFrame();
-        if (RenderType::RenderClient == m_renderType || RenderType::RenderNative == m_renderType)
+        if (RenderType::RenderClient == m_options.renderType || RenderType::RenderNative == m_options.renderType)
             ImGui::NewFrame();
     }
     void AImGui::EndFrame()
@@ -407,7 +406,7 @@ namespace android
         if (!m_state)
             return;
 
-        if (RenderType::RenderClient == m_renderType)
+        if (RenderType::RenderClient == m_options.renderType)
         {
             ImGui::Render();
             const auto &sharedData = ImGui::GetSharedDrawData();
@@ -418,12 +417,18 @@ namespace android
                 WriteData(const_cast<uint8_t *>(sharedData.data()), sharedData.size());
             }
         }
-        else if (RenderType::RenderServer == m_renderType)
+        else if (RenderType::RenderServer == m_options.renderType)
         {
             switch (m_renderState)
             {
             case RenderState::SetFont:
             {
+                if (!m_options.exchangeFontData)
+                {
+                    m_renderState = RenderState::ReadData;
+                    break;
+                }
+
                 ImGui_ImplOpenGL3_DestroyFontsTexture();
                 ImGui::SetSharedFontData(m_serverFontData);
                 ImGui_ImplOpenGL3_CreateFontsTexture();
@@ -436,6 +441,15 @@ namespace android
                 auto drawData = ImGui::RenderSharedDrawData(m_serverRenderData);
                 if (nullptr != drawData)
                 {
+                    if (m_options.exchangeFontData)
+                    {
+                        for (const auto &cmdList : drawData->CmdLists)
+                        {
+                            for (auto &cmd : cmdList->CmdBuffer)
+                                cmd.TextureId = ImGui::GetIO().Fonts->TexID;
+                        }
+                    }
+
                     glClear(GL_COLOR_BUFFER_BIT);
                     ImGui_ImplOpenGL3_RenderDrawData(drawData);
                     eglSwapBuffers(m_defaultDisplay, m_eglSurface);
@@ -448,7 +462,7 @@ namespace android
                 break;
             }
         }
-        else if (RenderType::RenderNative == m_renderType)
+        else if (RenderType::RenderNative == m_options.renderType)
         {
             ImGui::Render();
             glClear(GL_COLOR_BUFFER_BIT);
@@ -464,7 +478,7 @@ namespace android
         if (!m_state)
             return;
 
-        if (RenderType::RenderServer == m_renderType || RenderType::RenderNative == m_renderType)
+        if (RenderType::RenderServer == m_options.renderType || RenderType::RenderNative == m_options.renderType)
         {
             static ATouchEvent touchEvent;
 
@@ -472,7 +486,7 @@ namespace android
                 return;
             event.TransformToScreen(m_screenWidth, m_screenHeight, m_rotateTheta);
 
-            if (RenderType::RenderServer == m_renderType)
+            if (RenderType::RenderServer == m_options.renderType)
                 WriteData(&event, sizeof(event));
         }
         else
@@ -485,7 +499,7 @@ namespace android
             }
         }
 
-        if (RenderType::RenderClient == m_renderType || RenderType::RenderNative == m_renderType)
+        if (RenderType::RenderClient == m_options.renderType || RenderType::RenderNative == m_options.renderType)
         {
             auto &imguiIO = ImGui::GetIO();
             switch (event.type)
@@ -552,10 +566,11 @@ namespace android
     {
         // Initialize rpc
         m_transportAddress.sin_family = AF_INET;
-        inet_pton(AF_INET, "127.0.0.1", &m_transportAddress.sin_addr);
         m_transportAddress.sin_port = htons(16888);
-        if (RenderType::RenderClient == m_renderType)
+        if (RenderType::RenderClient == m_options.renderType)
         {
+            inet_pton(AF_INET, m_options.clientConnectAddress.data(), &m_transportAddress.sin_addr);
+
             m_clientFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
             if (0 > m_clientFd)
             {
@@ -569,8 +584,10 @@ namespace android
                 return false;
             }
         }
-        else if (RenderType::RenderServer == m_renderType)
+        else if (RenderType::RenderServer == m_options.renderType)
         {
+            inet_pton(AF_INET, m_options.serverListenAddress.data(), &m_transportAddress.sin_addr);
+
             m_serverFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
             if (0 > m_serverFd)
             {
@@ -690,7 +707,7 @@ namespace android
         ImFontConfig fontConfig;
         fontConfig.SizePixels = 22.f;
         imguiIO.Fonts->AddFontDefault(&fontConfig);
-        if (RenderType::RenderClient == m_renderType)
+        if (RenderType::RenderClient == m_options.renderType && m_options.exchangeFontData)
         {
             auto sharedFontData = ImGui::GetSharedFontData();
             uint32_t packetSize = static_cast<uint32_t>(sharedFontData.size());
@@ -793,7 +810,7 @@ namespace android
 
             if (RenderState::ReadData != m_renderState)
                 continue;
-            if (m_serverFontData.empty()) // NOTE: First packet is font data
+            if (m_options.exchangeFontData && m_serverFontData.empty()) // NOTE: First packet is font data
             {
                 m_serverFontData.swap(m_serverRenderDataBack);
                 m_renderState = RenderState::SetFont;

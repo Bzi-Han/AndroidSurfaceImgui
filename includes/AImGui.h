@@ -15,6 +15,7 @@
 #include <thread>
 #include <memory>
 #include <vector>
+#include <string>
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
@@ -38,8 +39,18 @@ namespace android
             ReadData,
         };
 
+        struct Options
+        {
+            RenderType renderType = RenderType::RenderNative;
+            bool autoUpdateOrientation = false;
+            bool exchangeFontData = false;
+            std::string serverListenAddress = "127.0.0.1";
+            std::string clientConnectAddress = "127.0.0.1";
+        };
+
     public:
-        AImGui(RenderType renderType = RenderType::RenderNative, bool autoUpdateOrientation = false);
+        AImGui() : AImGui(Options{}) {}
+        AImGui(const Options &options);
         ~AImGui();
 
         void BeginFrame();
@@ -63,12 +74,11 @@ namespace android
 
     private:
         bool m_state = false;
-        bool m_autoUpdateOrientation;
 
         int m_rotateTheta = 0;
         int m_screenWidth = -1, m_screenHeight = -1;
 
-        RenderType m_renderType;
+        Options m_options;
         size_t m_maxPacketSize = 1 * 1024 * 1024; // 1MB
         sockaddr_in m_transportAddress{};
         int m_serverFd, m_clientFd;

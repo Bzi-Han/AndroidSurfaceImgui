@@ -6,7 +6,7 @@
 
 int main()
 {
-    android::AImGui imgui(android::AImGui::RenderType::RenderServer);
+    android::AImGui imgui(android::AImGui::Options{.renderType = android::AImGui::RenderType::RenderServer, .exchangeFontData = true});
 
     if (!imgui)
     {

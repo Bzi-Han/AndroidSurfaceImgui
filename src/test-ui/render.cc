@@ -6,7 +6,7 @@
 
 int main()
 {
-    android::AImGui imgui(android::AImGui::RenderType::RenderClient);
+    android::AImGui imgui(android::AImGui::Options{.renderType = android::AImGui::RenderType::RenderClient, .exchangeFontData = true});
     bool state = true, showDemoWindow = false, showAnotherWindow = false;
     ImVec4 clearColor(0.45f, 0.55f, 0.60f, 1.00f);
 
