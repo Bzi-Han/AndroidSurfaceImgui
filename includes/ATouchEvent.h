@@ -1,8 +1,6 @@
 #ifndef A_TOUCH_EVENT_H // !A_TOUCH_EVENT_H
 #define A_TOUCH_EVENT_H
 
-#include "Global.h"
-
 #include <fcntl.h>
 #include <unistd.h>
 #include <linux/input.h>
@@ -43,49 +41,7 @@ namespace android
             /* Returns true if array contains any non-zero bit from the range defined by start and end
              * bit index [startIndex, endIndex).
              */
-            bool any(size_t startIndex, size_t endIndex)
-            {
-                if (startIndex >= endIndex || startIndex > BITS || endIndex > BITS + 1)
-                {
-                    LogDebug("Invalid start/end index. start = %zu, end = %zu, total bits = %zu", startIndex,
-                             endIndex, BITS);
-                    return false;
-                }
-                size_t se = startIndex / WIDTH; // Start of element
-                size_t ee = endIndex / WIDTH;   // End of element
-                size_t si = startIndex % WIDTH; // Start index in start element
-                size_t ei = endIndex % WIDTH;   // End index in end element
-                // Need to check first unaligned bitset for any non zero bit
-                if (si > 0)
-                {
-                    size_t nBits = se == ee ? ei - si : WIDTH - si;
-                    // Generate the mask of interested bit range
-                    Element mask = ((1 << nBits) - 1) << si;
-                    if (mData[se++].to_ulong() & mask)
-                    {
-                        return true;
-                    }
-                }
-                // Check whole bitset for any bit set
-                for (; se < ee; se++)
-                {
-                    if (mData[se].any())
-                    {
-                        return true;
-                    }
-                }
-                // Need to check last unaligned bitset for any non zero bit
-                if (ei > 0 && se <= ee)
-                {
-                    // Generate the mask of interested bit range
-                    Element mask = (1 << ei) - 1;
-                    if (mData[se].to_ulong() & mask)
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            }
+            bool any(size_t startIndex, size_t endIndex);
             /* Load bit array values from buffer */
             void loadFromBuffer(const Buffer &buffer)
             {

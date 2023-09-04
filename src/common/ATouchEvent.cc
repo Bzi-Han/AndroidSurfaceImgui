@@ -1,5 +1,7 @@
 #include "ATouchEvent.h"
 
+#include "Global.h"
+
 int g_scanCodeMapping[] = {
     AKEYCODE_UNKNOWN, // Make scan codes mapping array start index with 1
     AKEYCODE_ESCAPE,
@@ -229,6 +231,57 @@ int g_scanCodeMapping[] = {
     AKEYCODE_BRIGHTNESS_UP,
     AKEYCODE_HEADSETHOOK,
 };
+
+namespace android
+{
+    namespace detail
+    {
+        template <std::size_t BITS>
+        bool BitArray<BITS>::any(size_t startIndex, size_t endIndex)
+        {
+            if (startIndex >= endIndex || startIndex > BITS || endIndex > BITS + 1)
+            {
+                LogDebug("Invalid start/end index. start = %zu, end = %zu, total bits = %zu", startIndex,
+                         endIndex, BITS);
+                return false;
+            }
+            size_t se = startIndex / WIDTH; // Start of element
+            size_t ee = endIndex / WIDTH;   // End of element
+            size_t si = startIndex % WIDTH; // Start index in start element
+            size_t ei = endIndex % WIDTH;   // End index in end element
+            // Need to check first unaligned bitset for any non zero bit
+            if (si > 0)
+            {
+                size_t nBits = se == ee ? ei - si : WIDTH - si;
+                // Generate the mask of interested bit range
+                Element mask = ((1 << nBits) - 1) << si;
+                if (mData[se++].to_ulong() & mask)
+                {
+                    return true;
+                }
+            }
+            // Check whole bitset for any bit set
+            for (; se < ee; se++)
+            {
+                if (mData[se].any())
+                {
+                    return true;
+                }
+            }
+            // Need to check last unaligned bitset for any non zero bit
+            if (ei > 0 && se <= ee)
+            {
+                // Generate the mask of interested bit range
+                Element mask = (1 << ei) - 1;
+                if (mData[se].to_ulong() & mask)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+}
 
 namespace android
 {

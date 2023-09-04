@@ -1,10 +1,6 @@
 #ifndef A_IMGUI_H // !A_IMGUI_H
 #define A_IMGUI_H
 
-#include "Global.h"
-#include "ANativeWindowCreator.h"
-#include "ATouchEvent.h"
-
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_android.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
@@ -19,6 +15,7 @@
 #include <thread>
 #include <memory>
 #include <vector>
+#include <string>
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
@@ -37,12 +34,23 @@ namespace android
 
         enum class RenderState
         {
+            SetFont,
             Rendering,
             ReadData,
         };
 
+        struct Options
+        {
+            RenderType renderType = RenderType::RenderNative;
+            bool autoUpdateOrientation = false;
+            bool exchangeFontData = false;
+            std::string serverListenAddress = "127.0.0.1";
+            std::string clientConnectAddress = "127.0.0.1";
+        };
+
     public:
-        AImGui(RenderType renderType = RenderType::RenderNative, bool autoUpdateOrientation = false);
+        AImGui() : AImGui(Options{}) {}
+        AImGui(const Options &options);
         ~AImGui();
 
         void BeginFrame();
@@ -66,16 +74,16 @@ namespace android
 
     private:
         bool m_state = false;
-        bool m_autoUpdateOrientation;
 
         int m_rotateTheta = 0;
         int m_screenWidth = -1, m_screenHeight = -1;
 
-        RenderType m_renderType;
+        Options m_options;
         size_t m_maxPacketSize = 1 * 1024 * 1024; // 1MB
         sockaddr_in m_transportAddress{};
         int m_serverFd, m_clientFd;
         std::unique_ptr<std::thread> m_serverWorkerThread;
+        std::vector<uint8_t> m_serverFontData;
         std::vector<uint8_t> m_serverRenderData, m_serverRenderDataBack;
         std::atomic<RenderState> m_renderState = RenderState::ReadData;
 
