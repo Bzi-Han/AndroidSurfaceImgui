@@ -5,6 +5,7 @@
 #include "ATouchEvent.h"
 
 #include <ImGui-SharedDrawData/modules/ImGuiSharedDrawData.h>
+#include <zstd.h>
 
 static ImGuiKey KeyCodeToImGuiKey(int32_t keyCode)
 {
@@ -412,9 +413,44 @@ namespace android
             const auto &sharedData = ImGui::GetSharedDrawData();
             if (!sharedData.empty())
             {
-                uint32_t packetSize = static_cast<uint32_t>(sharedData.size());
-                WriteData(&packetSize, sizeof(packetSize));
-                WriteData(const_cast<uint8_t *>(sharedData.data()), sharedData.size());
+                if (!m_options.compressionFrameData)
+                {
+                    uint32_t packetSize = static_cast<uint32_t>(sharedData.size());
+                    WriteData(&packetSize, sizeof(packetSize));
+                    WriteData(const_cast<uint8_t *>(sharedData.data()), sharedData.size());
+                }
+                else
+                {
+                    static std::vector<uint8_t> compressBuffer;
+                    static std::unique_ptr<ZSTD_CCtx, decltype(&ZSTD_freeCCtx)> compressContext(ZSTD_createCCtx(), &ZSTD_freeCCtx);
+                    size_t compressBufferSize = 7 + ZSTD_compressBound(sharedData.size());
+
+                    if (nullptr == compressContext)
+                    {
+                        LogDebug("[-] Client can not create compress context");
+                        exit(0); // Exit the program
+                    }
+                    if (compressBuffer.empty()) // First compression
+                    {
+                        ZSTD_CCtx_setParameter(compressContext.get(), ZSTD_c_compressionLevel, ZSTD_defaultCLevel());
+                        ZSTD_CCtx_setParameter(compressContext.get(), ZSTD_c_checksumFlag, 1);
+                    }
+                    if (compressBuffer.size() < compressBufferSize)
+                        compressBuffer.resize(compressBufferSize);
+
+                    ZSTD_inBuffer input = {sharedData.data(), sharedData.size(), 0};
+                    ZSTD_outBuffer output = {compressBuffer.data(), compressBuffer.size(), 0};
+                    if (0 == ZSTD_compressStream2(compressContext.get(), &output, &input, ZSTD_e_end))
+                    {
+                        uint32_t packetSize = sizeof(uint32_t) + output.pos;
+                        WriteData(&packetSize, sizeof(packetSize));
+                        uint32_t sharedDataSize = sharedData.size();
+                        WriteData(&sharedDataSize, sizeof(sharedDataSize));
+                        WriteData(compressBuffer.data(), output.pos);
+                    }
+                    else
+                        LogDebug("[-] Client compression frame data error");
+                }
             }
         }
         else if (RenderType::RenderServer == m_options.renderType)
@@ -817,7 +853,28 @@ namespace android
             }
             else
             {
-                m_serverRenderData.swap(m_serverRenderDataBack);
+                if (!m_options.compressionFrameData)
+                    m_serverRenderData.swap(m_serverRenderDataBack);
+                else
+                {
+                    static std::unique_ptr<ZSTD_DCtx, decltype(&ZSTD_freeDCtx)> decompressContext(ZSTD_createDCtx(), &ZSTD_freeDCtx);
+
+                    if (nullptr == decompressContext)
+                    {
+                        LogDebug("[-] Server can not create decompress context");
+                        exit(0); // Exit the program
+                    }
+
+                    uint32_t sharedDataSize = 0;
+                    memcpy(&sharedDataSize, m_serverRenderDataBack.data(), sizeof(sharedDataSize));
+                    if (m_serverRenderData.size() < sharedDataSize)
+                        m_serverRenderData.resize(sharedDataSize);
+
+                    ZSTD_inBuffer input{m_serverRenderDataBack.data() + sizeof(sharedDataSize), packetSize - sizeof(sharedDataSize), 0};
+                    ZSTD_outBuffer output{m_serverRenderData.data(), m_serverRenderData.size(), 0};
+                    if (0 != ZSTD_decompressStream(decompressContext.get(), &output, &input))
+                        LogDebug("[-] Server decompression frame data error");
+                }
                 m_renderState = RenderState::Rendering;
             }
         }

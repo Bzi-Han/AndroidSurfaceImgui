@@ -42,6 +42,7 @@ namespace android
         struct Options
         {
             RenderType renderType = RenderType::RenderNative;
+            bool compressionFrameData = true;
             bool autoUpdateOrientation = false;
             bool exchangeFontData = false;
             std::string serverListenAddress = "127.0.0.1";
