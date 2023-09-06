@@ -16,7 +16,7 @@
 0. 确保在项目根目录打开命令行终端 。
 1. 执行`git submodule init` 。
 2. 执行`git submodule update` 。
-3. 执行`cmake -DCMAKE_TOOLCHAIN_FILE=${NDK_PATH}build/cmake/android.toolchain.cmake -DANDROID_PLATFORM=android-23 -DANDROID_ABI=${PLATFORM} -S . -B build -G Ninja`，其中`${NDK_PATH}`需要替换为你的NDK路径，`${PLATFORM}`替换成你想要编译出的目标平台。
+3. 执行`cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${NDK_PATH}build/cmake/android.toolchain.cmake -DANDROID_PLATFORM=android-23 -DANDROID_ABI=${PLATFORM} -S . -B build -G Ninja`，其中`${NDK_PATH}`需要替换为你的NDK路径，`${PLATFORM}`替换成你想要编译出的目标平台。
 4. 执行`cmake --build build --config Release`。
 5. 编译完成。
 
