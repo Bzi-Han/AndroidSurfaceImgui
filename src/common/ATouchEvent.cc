@@ -321,6 +321,12 @@ namespace android
             m_deviceFd = -1;
         }
 
+        if (-1 == m_deviceFd)
+        {
+            LogDebug("[-] Could not find the touch event device.");
+            return;
+        }
+
         int buffer[6]{};
         ioctl(m_deviceFd, EVIOCGABS(ABS_MT_POSITION_X), buffer);
         transformScalerX = buffer[2];
@@ -377,15 +383,18 @@ namespace android
             {
             case EV_KEY:
             {
-                if (BTN_TOUCH == processEvent.code)
+                if (BTN_TOUCH == processEvent.code || BTN_TOOL_FINGER == processEvent.code)
                 {
                     touchEvent->type = 1 == processEvent.value ? EventType::TouchDown : EventType::TouchUp;
                     break;
                 }
+                else if (KEY_RESERVED <= processEvent.code && sizeof(g_scanCodeMapping) > processEvent.code)
+                {
+                    touchEvent->scanCode = processEvent.code;
+                    touchEvent->keyCode = g_scanCodeMapping[touchEvent->scanCode];
+                    touchEvent->type = 1 == processEvent.value ? EventType::KeyDown : EventType::KeyUp;
+                }
 
-                touchEvent->scanCode = processEvent.code;
-                touchEvent->keyCode = g_scanCodeMapping[touchEvent->scanCode];
-                touchEvent->type = 1 == processEvent.value ? EventType::KeyDown : EventType::KeyUp;
                 break;
             }
             case EV_REL:
