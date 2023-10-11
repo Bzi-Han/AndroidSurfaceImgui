@@ -530,7 +530,7 @@ namespace android
             auto readResult = ReadData(&event, sizeof(event));
             if (0 >= readResult)
             {
-                LogDebug("[-] Client can not read input event, readResult:%d  %d:%s", readResult, errno, strerror(errno));
+                // LogDebug("[-] Client can not read input event, readResult:%d  %d:%s", readResult, errno, strerror(errno));
                 return;
             }
         }
@@ -885,9 +885,17 @@ namespace android
     int AImGui::ReadData(void *buffer, size_t readSize)
     {
         size_t packetReaded = 0;
+        pollfd pfd{
+            .fd = m_clientFd,
+            .events = POLLIN,
+        };
 
         while (packetReaded < readSize)
         {
+            auto pollResult = poll(&pfd, 1, 1000); // Wait for 1s
+            if (0 >= pollResult)
+                return pollResult;
+
             auto readResult = read(m_clientFd, reinterpret_cast<char *>(buffer) + packetReaded, readSize - packetReaded);
             if (0 >= readResult)
                 return readResult;
