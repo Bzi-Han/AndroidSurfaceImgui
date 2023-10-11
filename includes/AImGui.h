@@ -8,6 +8,7 @@
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 #include <sys/socket.h>
+#include <poll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <android/keycodes.h>
