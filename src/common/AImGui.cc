@@ -685,20 +685,26 @@ namespace android
 
         EGLint numEglConfig = 0;
         EGLConfig eglConfig{};
-        std::pair<EGLint, EGLint> eglConfigAttribList[] = {
-            {EGL_SURFACE_TYPE, EGL_WINDOW_BIT},
-            {EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT},
-            {EGL_BLUE_SIZE, 5},
-            {EGL_GREEN_SIZE, 6},
-            {EGL_RED_SIZE, 5},
-            {EGL_BUFFER_SIZE, 32},
-            {EGL_DEPTH_SIZE, 16},
-            {EGL_STENCIL_SIZE, 8},
+        std::pair<EGLint, EGLint> eglConfigAttributeList[] = {
+            {EGL_SURFACE_TYPE, EGL_WINDOW_BIT},        // 渲染表面类型为窗口
+            {EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT}, // 使用OpenGL ES 2.0
+            {EGL_RED_SIZE, 8},                         // 红色分量位数为8位
+            {EGL_GREEN_SIZE, 8},                       // 绿色分量位数为8位
+            {EGL_BLUE_SIZE, 8},                        // 蓝色分量位数为8位
+            {EGL_ALPHA_SIZE, 8},                       // Alpha 位数为8位
+            {EGL_DEPTH_SIZE, 24},                      // 深度缓冲位数为24位
+            {EGL_STENCIL_SIZE, 8},                     // 模板缓冲位数为8位
+            {EGL_SAMPLE_BUFFERS, 0},                   // 多重采样抗锯齿缓冲禁用
             {EGL_NONE, EGL_NONE},
         };
-        if (EGL_TRUE != eglChooseConfig(m_defaultDisplay, reinterpret_cast<const EGLint *>(eglConfigAttribList), &eglConfig, 1, &numEglConfig))
+        if (EGL_TRUE != eglChooseConfig(m_defaultDisplay, reinterpret_cast<const EGLint *>(eglConfigAttributeList), &eglConfig, 1, &numEglConfig))
         {
             LogDebug("[-] EGL choose config failed: %d", eglGetError());
+            return false;
+        }
+        if (0 == numEglConfig)
+        {
+            LogDebug("[-] EGL choose config failed: Unsupported config attribute list.");
             return false;
         }
 
