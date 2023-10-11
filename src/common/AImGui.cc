@@ -630,6 +630,12 @@ namespace android
                 LogDebug("[-] Server fd create failed, m_serverFd:%d", m_serverFd);
                 return false;
             }
+            int optionValue = 1;
+            if (0 > setsockopt(m_serverFd, SOL_SOCKET, SO_REUSEADDR, &optionValue, sizeof(int)))
+            {
+                LogDebug("[-] Server fd set reuseaddr failed, m_serverFd:%d", m_serverFd);
+                return false;
+            }
 
             if (0 > bind(m_serverFd, reinterpret_cast<sockaddr *>(&m_transportAddress), sizeof(m_transportAddress)))
             {
