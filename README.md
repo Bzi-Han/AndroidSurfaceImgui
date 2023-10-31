@@ -11,6 +11,14 @@
 
 **注意**：如果拥有Surface的进程的用户权限在`shell`之下，则你的Surface不会被系统添加到根视图，也就是不会显示出来，详情请看：[SurfaceFlinger.cpp](https://cs.android.com/android/platform/superproject/main/+/main:frameworks/native/services/surfaceflinger/SurfaceFlinger.cpp;l=4769)
 
+#### 支持系统版本
+
++ [x] Android9
++ [x] Android10
++ [x] Android11
++ [x] Android12
++ [x] Android13
+
 #### 编译
 
 0. 确保在项目根目录打开命令行终端 。
