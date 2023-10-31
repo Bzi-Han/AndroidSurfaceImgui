@@ -2,10 +2,18 @@
 #define A_NATIVE_WINDOW_CREATOR_H
 
 #include <android/native_window.h>
+#include <android/log.h>
 #include <dlfcn.h>
 
 #include <cstddef>
 #include <unordered_map>
+
+#define ResolveMethod(ClassName, MethodName, Handle, MethodSignature)                                                                \
+    ClassName##__##MethodName = reinterpret_cast<decltype(ClassName##__##MethodName)>(symbolMethod.Find(Handle, MethodSignature));   \
+    if (nullptr == ClassName##__##MethodName)                                                                                        \
+    {                                                                                                                                \
+        __android_log_print(ANDROID_LOG_ERROR, "ImGui", "Method not found: %s -> %s::%s", MethodSignature, #ClassName, #MethodName); \
+    }
 
 namespace android
 {
@@ -106,22 +114,22 @@ namespace android
                 static auto libutils = symbolMethod.Open("/system/lib/libutils.so", RTLD_LAZY);
 #endif
 
-                RefBase__IncStrong = reinterpret_cast<decltype(RefBase__IncStrong)>(symbolMethod.Find(libutils, "_ZNK7android7RefBase9incStrongEPKv"));
-                RefBase__DecStrong = reinterpret_cast<decltype(RefBase__DecStrong)>(symbolMethod.Find(libutils, "_ZNK7android7RefBase9decStrongEPKv"));
+                ResolveMethod(RefBase, IncStrong, libutils, "_ZNK7android7RefBase9incStrongEPKv");
+                ResolveMethod(RefBase, DecStrong, libutils, "_ZNK7android7RefBase9decStrongEPKv");
 
-                String8__Constructor = reinterpret_cast<decltype(String8__Constructor)>(symbolMethod.Find(libutils, "_ZN7android7String8C2EPKc"));
-                String8__Destructor = reinterpret_cast<decltype(String8__Destructor)>(symbolMethod.Find(libutils, "_ZN7android7String8D2Ev"));
+                ResolveMethod(String8, Constructor, libutils, "_ZN7android7String8C2EPKc");
+                ResolveMethod(String8, Destructor, libutils, "_ZN7android7String8D2Ev");
 
-                LayerMetadata__Constructor = reinterpret_cast<decltype(LayerMetadata__Constructor)>(symbolMethod.Find(libgui, "_ZN7android13LayerMetadataC2Ev"));
+                ResolveMethod(LayerMetadata, Constructor, libgui, "_ZN7android13LayerMetadataC2Ev");
 
-                SurfaceComposerClient__Constructor = reinterpret_cast<decltype(SurfaceComposerClient__Constructor)>(symbolMethod.Find(libgui, "_ZN7android21SurfaceComposerClientC2Ev"));
-                SurfaceComposerClient__CreateSurface = reinterpret_cast<decltype(SurfaceComposerClient__CreateSurface)>(symbolMethod.Find(libgui, "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8EjjijRKNS_2spINS_7IBinderEEENS_13LayerMetadataEPj"));
-                SurfaceComposerClient__GetInternalDisplayToken = reinterpret_cast<decltype(SurfaceComposerClient__GetInternalDisplayToken)>(symbolMethod.Find(libgui, "_ZN7android21SurfaceComposerClient23getInternalDisplayTokenEv"));
-                SurfaceComposerClient__GetDisplayState = reinterpret_cast<decltype(SurfaceComposerClient__GetDisplayState)>(symbolMethod.Find(libgui, "_ZN7android21SurfaceComposerClient15getDisplayStateERKNS_2spINS_7IBinderEEEPNS_2ui12DisplayStateE"));
+                ResolveMethod(SurfaceComposerClient, Constructor, libgui, "_ZN7android21SurfaceComposerClientC2Ev");
+                ResolveMethod(SurfaceComposerClient, CreateSurface, libgui, "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8EjjijRKNS_2spINS_7IBinderEEENS_13LayerMetadataEPj");
+                ResolveMethod(SurfaceComposerClient, GetInternalDisplayToken, libgui, "_ZN7android21SurfaceComposerClient23getInternalDisplayTokenEv");
+                ResolveMethod(SurfaceComposerClient, GetDisplayState, libgui, "_ZN7android21SurfaceComposerClient15getDisplayStateERKNS_2spINS_7IBinderEEEPNS_2ui12DisplayStateE");
 
-                SurfaceControl__Validate = reinterpret_cast<decltype(SurfaceControl__Validate)>(symbolMethod.Find(libgui, "_ZNK7android14SurfaceControl8validateEv"));
-                SurfaceControl__GetSurface = reinterpret_cast<decltype(SurfaceControl__GetSurface)>(symbolMethod.Find(libgui, "_ZN7android14SurfaceControl10getSurfaceEv"));
-                SurfaceControl__DisConnect = reinterpret_cast<decltype(SurfaceControl__DisConnect)>(symbolMethod.Find(libgui, "_ZN7android14SurfaceControl10disconnectEv"));
+                ResolveMethod(SurfaceControl, Validate, libgui, "_ZNK7android14SurfaceControl8validateEv");
+                ResolveMethod(SurfaceControl, GetSurface, libgui, "_ZN7android14SurfaceControl10getSurfaceEv");
+                ResolveMethod(SurfaceControl, DisConnect, libgui, "_ZN7android14SurfaceControl10disconnectEv");
 
                 symbolMethod.Close(libutils);
                 symbolMethod.Close(libgui);
@@ -322,5 +330,7 @@ namespace android
         inline static std::unordered_map<ANativeWindow *, detail::SurfaceControl> m_cachedSurfaceControl;
     };
 }
+
+#undef ResolveMethod
 
 #endif // !A_NATIVE_WINDOW_CREATOR_H
