@@ -7,7 +7,7 @@ option(ANDROID_SURFACE_IMGUI_BUILD_SHARED "Build test library." ON)
 option(ANDROID_SURFACE_IMGUI_BUILD_TESTING "Build test programs." ON)
 
 set(CMAKE_CXX_STANDARD 20)
-add_compile_options(-fno-rtti)
+add_compile_options(-fno-rtti -fvisibility=hidden)
 add_link_options(-s)
 
 find_library(liblog log NO_CACHE)
