@@ -398,7 +398,22 @@ namespace android
         }
 
         ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplAndroid_NewFrame();
+        if (RenderType::RenderClient != m_options.renderType)
+            ImGui_ImplAndroid_NewFrame();
+        else
+        {
+            // Copy from imgui_impl_android.cpp
+            timespec currentTimeSpec{};
+            auto &imguiIO = ImGui::GetIO();
+
+            imguiIO.DisplaySize = {static_cast<float>(m_screenWidth), static_cast<float>(m_screenHeight)};
+            imguiIO.DisplayFramebufferScale = {1.0f, 1.0f};
+
+            clock_gettime(CLOCK_MONOTONIC, &currentTimeSpec);
+            double currentTime = static_cast<double>(currentTimeSpec.tv_sec) + currentTimeSpec.tv_nsec / 1000000000.0;
+            imguiIO.DeltaTime = 0.0 < m_lastTime ? static_cast<float>(currentTime - m_lastTime) : static_cast<float>(1.0f / 60.0f);
+            m_lastTime = currentTime;
+        }
         if (RenderType::RenderClient == m_options.renderType || RenderType::RenderNative == m_options.renderType)
             ImGui::NewFrame();
     }
@@ -656,18 +671,21 @@ namespace android
         auto displayInfo = ANativeWindowCreator::GetDisplayInfo();
         LogInfo("[=] Display angle:%d width:%d height:%d", displayInfo.theta, displayInfo.width, displayInfo.height);
 
-        // Create native window
-        m_nativeWindow = ANativeWindowCreator::Create("AImGui");
-        if (nullptr == m_nativeWindow)
+        if (RenderType::RenderClient != m_options.renderType)
         {
-            LogDebug("[-] ANativeWindow create failed");
-            return false;
-        }
+            // Create native window
+            m_nativeWindow = ANativeWindowCreator::Create("AImGui");
+            if (nullptr == m_nativeWindow)
+            {
+                LogDebug("[-] ANativeWindow create failed");
+                return false;
+            }
 
-        // Acquire native window
-        LogInfo("[=] Acquiring native window");
-        ANativeWindow_acquire(m_nativeWindow);
-        LogInfo("[+] Native window acquired");
+            // Acquire native window
+            LogInfo("[=] Acquiring native window");
+            ANativeWindow_acquire(m_nativeWindow);
+            LogInfo("[+] Native window acquired");
+        }
 
         // EGL initialization
         m_defaultDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
@@ -686,7 +704,10 @@ namespace android
         EGLint numEglConfig = 0;
         EGLConfig eglConfig{};
         std::pair<EGLint, EGLint> eglConfigAttributeList[] = {
-            {EGL_SURFACE_TYPE, EGL_WINDOW_BIT},        // 渲染表面类型为窗口
+            {
+                EGL_SURFACE_TYPE,
+                RenderType::RenderClient != m_options.renderType ? EGL_WINDOW_BIT : EGL_PBUFFER_BIT,
+            },                                         // 根据服务类型选择渲染表面类型为窗口或像素缓冲区
             {EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT}, // 使用OpenGL ES 2.0
             {EGL_RED_SIZE, 8},                         // 红色分量位数为8位
             {EGL_GREEN_SIZE, 8},                       // 绿色分量位数为8位
@@ -708,14 +729,27 @@ namespace android
             return false;
         }
 
-        EGLint eglBufferFormat;
-        if (EGL_TRUE != eglGetConfigAttrib(m_defaultDisplay, eglConfig, EGL_NATIVE_VISUAL_ID, &eglBufferFormat))
+        if (RenderType::RenderClient != m_options.renderType)
         {
-            LogDebug("[-] EGL get config attribute failed: %d", eglGetError());
-            return false;
+            EGLint eglBufferFormat;
+            if (EGL_TRUE != eglGetConfigAttrib(m_defaultDisplay, eglConfig, EGL_NATIVE_VISUAL_ID, &eglBufferFormat))
+            {
+                LogDebug("[-] EGL get config attribute failed: %d", eglGetError());
+                return false;
+            }
+            ANativeWindow_setBuffersGeometry(m_nativeWindow, 0, 0, eglBufferFormat);
+            m_eglSurface = eglCreateWindowSurface(m_defaultDisplay, eglConfig, m_nativeWindow, nullptr);
         }
-        ANativeWindow_setBuffersGeometry(m_nativeWindow, 0, 0, eglBufferFormat);
-        m_eglSurface = eglCreateWindowSurface(m_defaultDisplay, eglConfig, m_nativeWindow, nullptr);
+        else
+        {
+            std::pair<EGLint, EGLint> bufferAttribute[] = {
+                {EGL_WIDTH, displayInfo.width},
+                {EGL_HEIGHT, displayInfo.height},
+                {EGL_NONE, EGL_NONE},
+            };
+
+            m_eglSurface = eglCreatePbufferSurface(m_defaultDisplay, eglConfig, reinterpret_cast<const EGLint *>(bufferAttribute));
+        }
         if (EGL_NO_SURFACE == m_eglSurface)
         {
             LogDebug("[-] EGL create window surface failed: %d", eglGetError());
@@ -764,10 +798,17 @@ namespace android
             WriteData(sharedFontData.data(), sharedFontData.size());
         }
 
-        if (!ImGui_ImplAndroid_Init(m_nativeWindow))
+        if (RenderType::RenderClient != m_options.renderType)
         {
-            LogDebug("[-] ImGui init android implement failed");
-            return false;
+            if (!ImGui_ImplAndroid_Init(m_nativeWindow))
+            {
+                LogDebug("[-] ImGui init android implement failed");
+                return false;
+            }
+        }
+        else
+        {
+            imguiIO.BackendPlatformName = "imgui_impl_aimgui";
         }
         if (!ImGui_ImplOpenGL3_Init("#version 300 es"))
         {
@@ -791,7 +832,11 @@ namespace android
         if (nullptr != m_imguiContext)
         {
             ImGui_ImplOpenGL3_Shutdown();
-            ImGui_ImplAndroid_Shutdown();
+
+            if (RenderType::RenderClient != m_options.renderType)
+                ImGui_ImplAndroid_Shutdown();
+            else
+                ImGui::GetIO().BackendPlatformName = nullptr;
             ImGui::DestroyContext(m_imguiContext);
         }
 
@@ -807,10 +852,13 @@ namespace android
             eglTerminate(m_defaultDisplay);
         }
 
-        if (nullptr != m_nativeWindow)
+        if (RenderType::RenderClient != m_options.renderType)
         {
-            ANativeWindow_release(m_nativeWindow);
-            android::ANativeWindowCreator::Destroy(m_nativeWindow);
+            if (nullptr != m_nativeWindow)
+            {
+                ANativeWindow_release(m_nativeWindow);
+                android::ANativeWindowCreator::Destroy(m_nativeWindow);
+            }
         }
 
         close(m_clientFd);

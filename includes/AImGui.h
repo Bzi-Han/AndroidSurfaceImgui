@@ -12,6 +12,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <android/keycodes.h>
+#include <linux/time.h>
 
 #include <thread>
 #include <memory>
@@ -79,6 +80,7 @@ namespace android
 
         int m_rotateTheta = 0;
         int m_screenWidth = -1, m_screenHeight = -1;
+        double m_lastTime = 0.0;
 
         Options m_options;
         size_t m_maxPacketSize = 1 * 1024 * 1024; // 1MB
