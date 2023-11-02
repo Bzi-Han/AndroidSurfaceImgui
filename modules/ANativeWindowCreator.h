@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <unordered_map>
 #include <string>
+#include <vector>
 
 #define ResolveMethod(ClassName, MethodName, Handle, MethodSignature)                                                                    \
     ClassName##__##MethodName = reinterpret_cast<decltype(ClassName##__##MethodName)>(symbolMethod.Find(Handle, MethodSignature));       \
@@ -76,6 +77,11 @@ namespace android
                 DisplayIdMain = 0,
                 DisplayIdHdmi = 1
             };
+
+            struct PhysicalDisplayId
+            {
+                uint64_t value;
+            };
         }
 
         struct String8;
@@ -85,6 +91,8 @@ namespace android
         struct Surface;
 
         struct SurfaceControl;
+
+        struct SurfaceComposerClientTransaction;
 
         struct SurfaceComposerClient;
 
@@ -128,6 +136,13 @@ namespace android
             StrongPointer<void> (*SurfaceComposerClient__GetBuiltInDisplay)(ui::DisplayType type) = nullptr;
             int32_t (*SurfaceComposerClient__GetDisplayState)(StrongPointer<void> &display, ui::DisplayState *displayState) = nullptr;
             int32_t (*SurfaceComposerClient__GetDisplayInfo)(StrongPointer<void> &display, ui::DisplayInfo *displayInfo) = nullptr;
+            std::vector<ui::PhysicalDisplayId> (*SurfaceComposerClient__GetPhysicalDisplayIds)() = nullptr;
+            StrongPointer<void> (*SurfaceComposerClient__GetPhysicalDisplayToken)(ui::PhysicalDisplayId displayId) = nullptr;
+
+            void (*SurfaceComposerClient__Transaction__Constructor)(void *thiz) = nullptr;
+            void *(*SurfaceComposerClient__Transaction__SetLayer)(void *thiz, StrongPointer<void> &surfaceControl, int32_t z) = nullptr;
+            void *(*SurfaceComposerClient__Transaction__SetTrustedOverlay)(void *thiz, StrongPointer<void> &surfaceControl, bool isTrustedOverlay) = nullptr;
+            int32_t (*SurfaceComposerClient__Transaction__Apply)(void *thiz, bool synchronous, bool oneWay) = nullptr;
 
             int32_t (*SurfaceControl__Validate)(void *thiz) = nullptr;
             StrongPointer<Surface> (*SurfaceControl__GetSurface)(void *thiz) = nullptr;
@@ -148,6 +163,19 @@ namespace android
                 }
 
                 static std::unordered_map<size_t, std::unordered_map<void **, const char *>> patchesTable = {
+                    {
+                        14,
+                        {
+                            {reinterpret_cast<void **>(&LayerMetadata__Constructor), "_ZN7android3gui13LayerMetadataC2Ev"},
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__CreateSurface), "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8EjjiiRKNS_2spINS_7IBinderEEENS_3gui13LayerMetadataEPj"},
+                        },
+                    },
+                    {
+                        12,
+                        {
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__Transaction__Apply), "_ZN7android21SurfaceComposerClient11Transaction5applyEb"},
+                        },
+                    },
                     {
                         11,
                         {
@@ -193,6 +221,13 @@ namespace android
                 ResolveMethod(SurfaceComposerClient, GetInternalDisplayToken, libgui, "_ZN7android21SurfaceComposerClient23getInternalDisplayTokenEv");
                 ResolveMethod(SurfaceComposerClient, GetDisplayState, libgui, "_ZN7android21SurfaceComposerClient15getDisplayStateERKNS_2spINS_7IBinderEEEPNS_2ui12DisplayStateE");
                 ResolveMethod(SurfaceComposerClient, GetDisplayInfo, libgui, "_ZN7android21SurfaceComposerClient14getDisplayInfoERKNS_2spINS_7IBinderEEEPNS_11DisplayInfoE");
+                ResolveMethod(SurfaceComposerClient, GetPhysicalDisplayIds, libgui, "_ZN7android21SurfaceComposerClient21getPhysicalDisplayIdsEv");
+                ResolveMethod(SurfaceComposerClient, GetPhysicalDisplayToken, libgui, "_ZN7android21SurfaceComposerClient23getPhysicalDisplayTokenENS_17PhysicalDisplayIdE");
+
+                ResolveMethod(SurfaceComposerClient__Transaction, Constructor, libgui, "_ZN7android21SurfaceComposerClient11TransactionC2Ev");
+                ResolveMethod(SurfaceComposerClient__Transaction, SetLayer, libgui, "_ZN7android21SurfaceComposerClient11Transaction8setLayerERKNS_2spINS_14SurfaceControlEEEi");
+                ResolveMethod(SurfaceComposerClient__Transaction, SetTrustedOverlay, libgui, "_ZN7android21SurfaceComposerClient11Transaction17setTrustedOverlayERKNS_2spINS_14SurfaceControlEEEb");
+                ResolveMethod(SurfaceComposerClient__Transaction, Apply, libgui, "_ZN7android21SurfaceComposerClient11Transaction5applyEbb");
 
                 ResolveMethod(SurfaceControl, Validate, libgui, "_ZNK7android14SurfaceControl8validateEv");
                 ResolveMethod(SurfaceControl, GetSurface, libgui, "_ZN7android14SurfaceControl10getSurfaceEv");
@@ -309,6 +344,34 @@ namespace android
             }
         };
 
+        struct SurfaceComposerClientTransaction
+        {
+            char data[1024];
+
+            SurfaceComposerClientTransaction()
+            {
+                Functionals::GetInstance().SurfaceComposerClient__Transaction__Constructor(data);
+            }
+
+            void *SetLayer(StrongPointer<void> &surfaceControl, int32_t z)
+            {
+                return Functionals::GetInstance().SurfaceComposerClient__Transaction__SetLayer(data, surfaceControl, z);
+            }
+
+            void *SetTrustedOverlay(StrongPointer<void> &surfaceControl, bool isTrustedOverlay)
+            {
+                return Functionals::GetInstance().SurfaceComposerClient__Transaction__SetTrustedOverlay(data, surfaceControl, isTrustedOverlay);
+            }
+
+            int32_t Apply(bool synchronous, bool oneWay)
+            {
+                if (12 >= Functionals::GetInstance().systemVersion)
+                    return reinterpret_cast<int32_t (*)(void *, bool)>(Functionals::GetInstance().SurfaceComposerClient__Transaction__Apply)(data, synchronous);
+                else
+                    return Functionals::GetInstance().SurfaceComposerClient__Transaction__Apply(data, synchronous, oneWay);
+            }
+        };
+
         struct SurfaceComposerClient
         {
             char data[1024];
@@ -333,6 +396,14 @@ namespace android
                 }
                 auto result = Functionals::GetInstance().SurfaceComposerClient__CreateSurface(data, windowName, width, height, 1, flags, parentHandle, layerMetadata, nullptr);
 
+                if (12 <= Functionals::GetInstance().systemVersion)
+                {
+                    static SurfaceComposerClientTransaction transaction;
+
+                    transaction.SetTrustedOverlay(result, true);
+                    transaction.Apply(false, true);
+                }
+
                 return {result.get()};
             }
 
@@ -340,10 +411,21 @@ namespace android
             {
                 StrongPointer<void> defaultDisplay;
 
-                if (9 < Functionals::GetInstance().systemVersion)
-                    defaultDisplay = Functionals::GetInstance().SurfaceComposerClient__GetInternalDisplayToken();
-                else
+                if (9 >= Functionals::GetInstance().systemVersion)
                     defaultDisplay = Functionals::GetInstance().SurfaceComposerClient__GetBuiltInDisplay(ui::DisplayType::DisplayIdMain);
+                else
+                {
+                    if (14 > Functionals::GetInstance().systemVersion)
+                        defaultDisplay = Functionals::GetInstance().SurfaceComposerClient__GetInternalDisplayToken();
+                    else
+                    {
+                        auto displayIds = Functionals::GetInstance().SurfaceComposerClient__GetPhysicalDisplayIds();
+                        if (displayIds.empty())
+                            return false;
+
+                        defaultDisplay = Functionals::GetInstance().SurfaceComposerClient__GetPhysicalDisplayToken(displayIds[0]);
+                    }
+                }
 
                 if (nullptr == defaultDisplay.get())
                     return false;
