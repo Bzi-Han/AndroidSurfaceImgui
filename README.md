@@ -19,6 +19,7 @@
 + [x] Android12
 + [x] Android13
 + [x] Android14
++ [x] Android15
 
 #### 编译
 

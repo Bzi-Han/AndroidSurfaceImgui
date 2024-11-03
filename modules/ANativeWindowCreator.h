@@ -164,6 +164,13 @@ namespace android
 
                 static std::unordered_map<size_t, std::unordered_map<void **, const char *>> patchesTable = {
                     {
+                        15,
+                        {
+                            {reinterpret_cast<void **>(&LayerMetadata__Constructor), "_ZN7android3gui13LayerMetadataC2Ev"},
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__CreateSurface), "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8EjjiiRKNS_2spINS_7IBinderEEENS_3gui13LayerMetadataEPj"},
+                        },
+                    },
+                    {
                         14,
                         {
                             {reinterpret_cast<void **>(&LayerMetadata__Constructor), "_ZN7android3gui13LayerMetadataC2Ev"},
