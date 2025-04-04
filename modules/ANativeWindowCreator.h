@@ -132,12 +132,16 @@ namespace android
             void (*SurfaceComposerClient__Constructor)(void *thiz) = nullptr;
             void (*SurfaceComposerClient__Destructor)(void *thiz) = nullptr;
             StrongPointer<void> (*SurfaceComposerClient__CreateSurface)(void *thiz, void *name, uint32_t w, uint32_t h, int32_t format, uint32_t flags, void *parentHandle, void *layerMetadata, uint32_t *outTransformHint) = nullptr;
+            StrongPointer<void> (*SurfaceComposerClient__CreateSurface__v7)(void *thiz, void *name, uint32_t w, uint32_t h, int32_t format, uint32_t flags) = nullptr;
             StrongPointer<void> (*SurfaceComposerClient__GetInternalDisplayToken)() = nullptr;
             StrongPointer<void> (*SurfaceComposerClient__GetBuiltInDisplay)(ui::DisplayType type) = nullptr;
             int32_t (*SurfaceComposerClient__GetDisplayState)(StrongPointer<void> &display, ui::DisplayState *displayState) = nullptr;
             int32_t (*SurfaceComposerClient__GetDisplayInfo)(StrongPointer<void> &display, ui::DisplayInfo *displayInfo) = nullptr;
             std::vector<ui::PhysicalDisplayId> (*SurfaceComposerClient__GetPhysicalDisplayIds)() = nullptr;
             StrongPointer<void> (*SurfaceComposerClient__GetPhysicalDisplayToken)(ui::PhysicalDisplayId displayId) = nullptr;
+
+            void (*SurfaceComposerClient__OpenGlobalTransaction)() = nullptr; // static method
+            void (*SurfaceComposerClient__CloseGlobalTransaction)(bool synchronous) = nullptr; // static method
 
             void (*SurfaceComposerClient__Transaction__Constructor)(void *thiz) = nullptr;
             void *(*SurfaceComposerClient__Transaction__SetLayer)(void *thiz, StrongPointer<void> &surfaceControl, int32_t z) = nullptr;
@@ -148,6 +152,8 @@ namespace android
             StrongPointer<Surface> (*SurfaceControl__GetSurface)(void *thiz) = nullptr;
             void (*SurfaceControl__DisConnect)(void *thiz) = nullptr;
 
+            void (*SurfaceControl__SetLayer)(void *thiz, int32_t z) = nullptr;
+
             Functionals(const SymbolMethod &symbolMethod)
             {
                 std::string systemVersionString(128, 0);
@@ -156,7 +162,7 @@ namespace android
                 if (!systemVersionString.empty())
                     systemVersion = std::stoi(systemVersionString);
 
-                if (9 > systemVersion)
+                if (6 > systemVersion)
                 {
                     __android_log_print(ANDROID_LOG_ERROR, "ImGui", "[-] Unsupported system version: %zu", systemVersion);
                     return;
@@ -203,6 +209,39 @@ namespace android
                             {reinterpret_cast<void **>(&SurfaceComposerClient__CreateSurface), "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8EjjijPNS_14SurfaceControlEii"},
                             {reinterpret_cast<void **>(&SurfaceComposerClient__GetBuiltInDisplay), "_ZN7android21SurfaceComposerClient17getBuiltInDisplayEi"},
                             {reinterpret_cast<void **>(&SurfaceControl__GetSurface), "_ZNK7android14SurfaceControl10getSurfaceEv"},
+                        },
+                    },
+                    {
+                        8,
+                        {
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__CreateSurface), "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8EjjijPNS_14SurfaceControlEjj"},
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__GetBuiltInDisplay), "_ZN7android21SurfaceComposerClient17getBuiltInDisplayEi"},
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__OpenGlobalTransaction), "_ZN7android21SurfaceComposerClient21openGlobalTransactionEv"},
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__CloseGlobalTransaction), "_ZN7android21SurfaceComposerClient22closeGlobalTransactionEb"},
+                            {reinterpret_cast<void **>(&SurfaceControl__GetSurface), "_ZNK7android14SurfaceControl10getSurfaceEv"},
+                            {reinterpret_cast<void **>(&SurfaceControl__SetLayer), "_ZN7android14SurfaceControl8setLayerEi"},
+                        },
+                    },
+                    {
+                        7,
+                        {
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__CreateSurface__v7), "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8Ejjij"},
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__GetBuiltInDisplay), "_ZN7android21SurfaceComposerClient17getBuiltInDisplayEi"},
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__OpenGlobalTransaction), "_ZN7android21SurfaceComposerClient21openGlobalTransactionEv"},
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__CloseGlobalTransaction), "_ZN7android21SurfaceComposerClient22closeGlobalTransactionEb"},
+                            {reinterpret_cast<void **>(&SurfaceControl__GetSurface), "_ZNK7android14SurfaceControl10getSurfaceEv"},
+                            {reinterpret_cast<void **>(&SurfaceControl__SetLayer), "_ZN7android14SurfaceControl8setLayerEj"},
+                        },
+                    },
+                    {
+                        6,
+                        {
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__CreateSurface__v7), "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8Ejjij"},
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__GetBuiltInDisplay), "_ZN7android21SurfaceComposerClient17getBuiltInDisplayEi"},
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__OpenGlobalTransaction), "_ZN7android21SurfaceComposerClient21openGlobalTransactionEv"},
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__CloseGlobalTransaction), "_ZN7android21SurfaceComposerClient22closeGlobalTransactionEb"},
+                            {reinterpret_cast<void **>(&SurfaceControl__GetSurface), "_ZNK7android14SurfaceControl10getSurfaceEv"},
+                            {reinterpret_cast<void **>(&SurfaceControl__SetLayer), "_ZN7android14SurfaceControl8setLayerEj"},
                         },
                     },
                 };
@@ -340,6 +379,14 @@ namespace android
                 Functionals::GetInstance().SurfaceControl__DisConnect(data);
             }
 
+            void SetLayer(int32_t z)
+            {
+                if (nullptr == data)
+                    return;
+
+                Functionals::GetInstance().SurfaceControl__SetLayer(data, z);
+            }
+
             void DestroySurface(Surface *surface)
             {
                 if (nullptr == data || nullptr == surface)
@@ -401,7 +448,12 @@ namespace android
                     static void *fakeParentHandleForBinder = nullptr;
                     parentHandle = &fakeParentHandleForBinder;
                 }
-                auto result = Functionals::GetInstance().SurfaceComposerClient__CreateSurface(data, windowName, width, height, 1, flags, parentHandle, layerMetadata, nullptr);
+
+                StrongPointer<void> result{};
+                if (7 < Functionals::GetInstance().systemVersion)
+                    result = Functionals::GetInstance().SurfaceComposerClient__CreateSurface(data, windowName, width, height, 1, flags, parentHandle, layerMetadata, nullptr);
+                else
+                    result = Functionals::GetInstance().SurfaceComposerClient__CreateSurface__v7(data, windowName, width, height, 1, flags);
 
                 if (12 <= Functionals::GetInstance().systemVersion)
                 {
@@ -409,6 +461,12 @@ namespace android
 
                     transaction.SetTrustedOverlay(result, true);
                     transaction.Apply(false, true);
+                }
+                else if (8 >= Functionals::GetInstance().systemVersion)
+                {
+                    OpenGlobalTransaction();
+                    SurfaceControl{result.get()}.SetLayer(0x7FFFFFFF);
+                    CloseGlobalTransaction(false);
                 }
 
                 return {result.get()};
@@ -451,6 +509,16 @@ namespace android
 
                     return true;
                 }
+            }
+
+            void OpenGlobalTransaction()
+            {
+                Functionals::GetInstance().SurfaceComposerClient__OpenGlobalTransaction();
+            }
+
+            void CloseGlobalTransaction(bool synchronous)
+            {
+                Functionals::GetInstance().SurfaceComposerClient__CloseGlobalTransaction(synchronous);
             }
         };
 
