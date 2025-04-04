@@ -39,7 +39,7 @@
 
 例子请看：[src/test-ui/main.cc](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main/src/test-ui/main.cc)
 
-![screenshot.jpg](https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main/screenshot.jpg)
+<img src="https://github.com/Bzi-Han/AndroidSurfaceImgui/blob/main/screenshot.jpg" height="500px" />
 
 ## RPC使用
 
