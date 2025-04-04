@@ -17,10 +17,10 @@
 
 | 古董版本 | 过渡版本 | 中间版本 | 新版本 |
 | --- | --- | --- | --- |
-| <input type="checkbox" checked disabled>Android6 | <input type="checkbox" checked disabled>Android8 | <input type="checkbox" checked disabled>Android9 | <input type="checkbox" checked disabled>Android12 |
-| <input type="checkbox" checked disabled>Android7 |  | <input type="checkbox" checked disabled>Android10 | <input type="checkbox" checked disabled>Android13 |
-|  |  | <input type="checkbox" checked disabled>Android11 | <input type="checkbox" checked disabled>Android14 |
-|  |  |  | <input type="checkbox" checked disabled>Android15 |
+| ✅ Android5 | ✅ Android8 | ✅ Android9 | ✅ Android12 |
+| ✅ Android6 |  | ✅ Android10 | ✅ Android13 |
+| ✅ Android7 |  | ✅ Android11 | ✅ Android14 |
+|  |  |  | ✅ Android15 |
 
 ## 编译
 
