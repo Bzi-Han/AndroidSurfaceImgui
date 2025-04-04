@@ -162,7 +162,7 @@ namespace android
                 if (!systemVersionString.empty())
                     systemVersion = std::stoi(systemVersionString);
 
-                if (6 > systemVersion)
+                if (5 > systemVersion)
                 {
                     __android_log_print(ANDROID_LOG_ERROR, "ImGui", "[-] Unsupported system version: %zu", systemVersion);
                     return;
@@ -242,6 +242,17 @@ namespace android
                             {reinterpret_cast<void **>(&SurfaceComposerClient__CloseGlobalTransaction), "_ZN7android21SurfaceComposerClient22closeGlobalTransactionEb"},
                             {reinterpret_cast<void **>(&SurfaceControl__GetSurface), "_ZNK7android14SurfaceControl10getSurfaceEv"},
                             {reinterpret_cast<void **>(&SurfaceControl__SetLayer), "_ZN7android14SurfaceControl8setLayerEj"},
+                        },
+                    },
+                    {
+                        5,
+                        {
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__CreateSurface__v7), "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8Ejjij"},
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__GetBuiltInDisplay), "_ZN7android21SurfaceComposerClient17getBuiltInDisplayEi"},
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__OpenGlobalTransaction), "_ZN7android21SurfaceComposerClient21openGlobalTransactionEv"},
+                            {reinterpret_cast<void **>(&SurfaceComposerClient__CloseGlobalTransaction), "_ZN7android21SurfaceComposerClient22closeGlobalTransactionEb"},
+                            {reinterpret_cast<void **>(&SurfaceControl__GetSurface), "_ZNK7android14SurfaceControl10getSurfaceEv"},
+                            {reinterpret_cast<void **>(&SurfaceControl__SetLayer), "_ZN7android14SurfaceControl8setLayerEi"},
                         },
                     },
                 };
