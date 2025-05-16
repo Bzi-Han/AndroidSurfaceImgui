@@ -33,7 +33,9 @@
 #include <android/native_window.h>
 
 #include <cstdint>
+#include <memory>
 #include <string>
+#include <string_view>
 #include <array>
 #include <vector>
 #include <unordered_map>
@@ -297,6 +299,7 @@ namespace android::detail::types::apis::libgui
         using LayerMetadata__Constructor = void (*)(void *thiz);
 
         using SurfaceComposerClient__Constructor = void *(*)(void *thiz);
+        using SurfaceComposerClient__MirrorSurface = StrongPointer<void> (*)(void *thiz, void *mirrorFromSurface);
         // Static
         using SurfaceComposerClient__GetInternalDisplayToken__Static = StrongPointer<void> (*)();
         using SurfaceComposerClient__GetBuiltInDisplay__Static = StrongPointer<void> (*)(ui::DisplayType type);
@@ -308,6 +311,10 @@ namespace android::detail::types::apis::libgui
         using SurfaceComposerClient__Transaction__Constructor = void *(*)(void *thiz);
         using SurfaceComposerClient__Transaction__SetLayer = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, int32_t z);
         using SurfaceComposerClient__Transaction__SetTrustedOverlay = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, bool isTrustedOverlay);
+        using SurfaceComposerClient__Transaction__SetLayerStack = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, uint32_t layerStack);
+        using SurfaceComposerClient__Transaction__Show = void *(*)(void *thiz, StrongPointer<void> &surfaceControl);
+        using SurfaceComposerClient__Transaction__Hide = void *(*)(void *thiz, StrongPointer<void> &surfaceControl);
+        using SurfaceComposerClient__Transaction__Reparent = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, StrongPointer<void> &newParentHandle);
 
         using SurfaceControl__GetSurface = StrongPointer<void> (*)(void *thiz);
         using SurfaceControl__DisConnect = void (*)(void *thiz);
@@ -377,6 +384,7 @@ namespace android::detail::apis
             {
                 void *Constructor;
                 void *CreateSurface;
+                void *MirrorSurface;
                 void *GetInternalDisplayToken;
                 void *GetBuiltInDisplay;
                 void *GetDisplayState;
@@ -398,6 +406,10 @@ namespace android::detail::apis
                 void *Constructor;
                 void *SetLayer;
                 void *SetTrustedOverlay;
+                void *SetLayerStack;
+                void *Show;
+                void *Hide;
+                void *Reparent;
                 void *Apply;
             };
 
@@ -481,6 +493,20 @@ namespace android::detail::compat
         {
         }
 
+        operator bool() const
+        {
+            return nullptr != data;
+        }
+
+        operator types::StrongPointer<void> &()
+        {
+            static types::StrongPointer<void> result;
+
+            result.pointer = data;
+
+            return result;
+        }
+
         Surface *GetSurface()
         {
             if (nullptr == data)
@@ -532,9 +558,29 @@ namespace android::detail::compat
             return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetLayer>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetLayer)(data, surfaceControl, z);
         }
 
+        void *SetLayerStack(types::StrongPointer<void> &surfaceControl, uint32_t layerStack)
+        {
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetLayerStack>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetLayerStack)(data, surfaceControl, layerStack);
+        }
+
         void *SetTrustedOverlay(types::StrongPointer<void> &surfaceControl, bool isTrustedOverlay)
         {
             return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetTrustedOverlay>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetTrustedOverlay)(data, surfaceControl, isTrustedOverlay);
+        }
+
+        void Show(types::StrongPointer<void> &surfaceControl)
+        {
+            reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__Show>(apis::libgui::SurfaceComposerClient::Transaction::Api.Show)(data, surfaceControl);
+        }
+
+        void Hide(types::StrongPointer<void> &surfaceControl)
+        {
+            reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__Hide>(apis::libgui::SurfaceComposerClient::Transaction::Api.Hide)(data, surfaceControl);
+        }
+
+        void Reparent(types::StrongPointer<void> &surfaceControl, types::StrongPointer<void> &newParentHandle)
+        {
+            reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__Reparent>(apis::libgui::SurfaceComposerClient::Transaction::Api.Reparent)(data, surfaceControl, newParentHandle);
         }
 
         int32_t Apply(bool synchronous, bool oneWay)
@@ -556,14 +602,13 @@ namespace android::detail::compat
             reinterpret_cast<types::apis::libutils::generic::RefBase__IncStrong>(apis::libutils::RefBase::Api.IncStrong)(data, this);
         }
 
-        SurfaceControl CreateSurface(const char *name, int32_t width, int32_t height)
+        SurfaceControl CreateSurface(const char *name, int32_t width, int32_t height, types::WindowFlags windowFlags = {})
         {
             static void *parentHandle = nullptr;
 
             parentHandle = nullptr;
             String8 windowName(name);
             types::PixelFormat pixelFormat = types::PixelFormat::RGBA_8888;
-            types::WindowFlags windowFlags{};
             LayerMetadata layerMetadata{};
 
             types::StrongPointer<void> result{};
@@ -622,6 +667,72 @@ namespace android::detail::compat
             }
 
             return {result.get()};
+        }
+
+        SurfaceControl MirrorSurface(SurfaceControl &surface, uint32_t layerStack)
+        {
+            using mirror_surfaces_t = std::pair<void *, void *>;
+            constexpr auto MirrorSurfacesDeleter = [](mirror_surfaces_t *pair)
+            {
+                SurfaceControl fakeSurface;
+
+                reinterpret_cast<types::apis::libgui::generic::SurfaceControl__DisConnect>(apis::libgui::SurfaceControl::Api.DisConnect)(pair->first);
+                reinterpret_cast<types::apis::libutils::generic::RefBase__DecStrong>(apis::libutils::RefBase::Api.DecStrong)(pair->first, fakeSurface.data);
+
+                reinterpret_cast<types::apis::libgui::generic::SurfaceControl__DisConnect>(apis::libgui::SurfaceControl::Api.DisConnect)(pair->second);
+                reinterpret_cast<types::apis::libutils::generic::RefBase__DecStrong>(apis::libutils::RefBase::Api.DecStrong)(pair->second, fakeSurface.data);
+
+                delete pair;
+            };
+
+            using mirror_surfaces_proxy_t = std::unique_ptr<mirror_surfaces_t, decltype(MirrorSurfacesDeleter)>;
+
+            if (14 > compat::SystemVersion)
+                return {};
+
+            auto mirrorSurface = reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__MirrorSurface>(apis::libgui::SurfaceComposerClient::Api.MirrorSurface)(data, surface.data);
+            if (nullptr == mirrorSurface.get())
+            {
+                LogError("[-] Failed to mirror surface: %u", layerStack);
+                return {};
+            }
+
+            int32_t width = -1, height = -1;
+            while (-1 == width || -1 == height)
+            {
+                detail::types::ui::DisplayState displayInfo{};
+
+                if (!GetDisplayInfo(&displayInfo))
+                    break;
+
+                width = displayInfo.layerStackSpaceRect.width;
+                height = displayInfo.layerStackSpaceRect.height;
+
+                break;
+            }
+            auto mirrorRootName = "MirrorRoot@" + std::to_string(layerStack);
+            auto mirrorRootSurface = CreateSurface(mirrorRootName.data(), width, height, types::WindowFlags::eNoColorFill);
+            if (!mirrorRootSurface)
+            {
+                LogError("[-] Failed to create mirror root surface: %u", layerStack);
+                return {};
+            }
+
+            static SurfaceComposerClientTransaction transaction;
+            static std::vector<mirror_surfaces_proxy_t> mirrorSurfaces;
+
+            transaction.SetLayer(mirrorRootSurface, INT_MAX);
+            transaction.SetLayerStack(mirrorRootSurface, layerStack);
+            transaction.Apply(false, true);
+
+            transaction.SetLayerStack(mirrorSurface, layerStack);
+            transaction.Show(mirrorSurface);
+            transaction.Reparent(mirrorSurface, mirrorRootSurface);
+            transaction.Apply(false, true);
+
+            mirrorSurfaces.emplace_back(new mirror_surfaces_t{mirrorSurface.get(), mirrorRootSurface.data}, MirrorSurfacesDeleter);
+
+            return {mirrorSurface.get()};
         }
 
         bool GetDisplayInfo(types::ui::DisplayState *displayInfo)
@@ -711,6 +822,8 @@ namespace android::detail
                     ApiDescriptor{12, 13, &apis::libgui::SurfaceComposerClient::Api.CreateSurface, "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8EjjijRKNS_2spINS_7IBinderEEENS_13LayerMetadataEPj"},
                     ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.CreateSurface, "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8EjjiiRKNS_2spINS_7IBinderEEENS_3gui13LayerMetadataEPj"},
 
+                    ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.MirrorSurface, "_ZN7android21SurfaceComposerClient13mirrorSurfaceEPNS_14SurfaceControlE"},
+
                     ApiDescriptor{5, 9, &apis::libgui::SurfaceComposerClient::Api.GetBuiltInDisplay, "_ZN7android21SurfaceComposerClient17getBuiltInDisplayEi"},
                     ApiDescriptor{10, 13, &apis::libgui::SurfaceComposerClient::Api.GetInternalDisplayToken, "_ZN7android21SurfaceComposerClient23getInternalDisplayTokenEv"},
                     ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.GetPhysicalDisplayIds, "_ZN7android21SurfaceComposerClient21getPhysicalDisplayIdsEv"},
@@ -727,6 +840,11 @@ namespace android::detail
                     ApiDescriptor{9, 11, &apis::libgui::SurfaceComposerClient::Transaction::Api.Apply, "_ZN7android21SurfaceComposerClient11Transaction5applyEbb"},
                     ApiDescriptor{12, 12, &apis::libgui::SurfaceComposerClient::Transaction::Api.Apply, "_ZN7android21SurfaceComposerClient11Transaction5applyEb"},
                     ApiDescriptor{13, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Apply, "_ZN7android21SurfaceComposerClient11Transaction5applyEbb"},
+
+                    ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetLayerStack, "_ZN7android21SurfaceComposerClient11Transaction13setLayerStackERKNS_2spINS_14SurfaceControlEEENS_2ui10LayerStackE"},
+                    ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Show, "_ZN7android21SurfaceComposerClient11Transaction4showERKNS_2spINS_14SurfaceControlEEE"},
+                    ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Hide, "_ZN7android21SurfaceComposerClient11Transaction4hideERKNS_2spINS_14SurfaceControlEEE"},
+                    ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Reparent, "_ZN7android21SurfaceComposerClient11Transaction8reparentERKNS_2spINS_14SurfaceControlEEES6_"},
 
                     // SurfaceComposerClient::GlobalTransaction
                     ApiDescriptor{5, 8, &apis::libgui::SurfaceComposerClient::Api.OpenGlobalTransaction, "_ZN7android21SurfaceComposerClient21openGlobalTransactionEv"},
@@ -834,6 +952,43 @@ namespace android::detail
             LogInfo("[+] Version[Android %zu] resolved all symbols", compat::SystemVersion);
         }
     };
+
+    inline std::vector<std::pair<std::string, std::string>> ParseDisplayInfo(const std::string_view &displayInfo)
+    {
+        constexpr auto SubStringView = [](const std::string_view &str, std::string_view start, std::string_view end, int startOffset = 0) -> std::string_view
+        {
+            auto startIt = str.find(start, startOffset);
+            if (std::string::npos == startIt)
+                return {};
+
+            auto endIt = str.find(end, startIt + start.size());
+            if (std::string::npos == endIt)
+                return {};
+
+            return str.substr(startIt + start.size(), endIt - startIt - start.size());
+        };
+
+        std::vector<std::pair<std::string, std::string>> result;
+
+        // DisplayDeviceInfo
+        auto displayInfoIt = std::string_view::npos;
+        while (std::string_view::npos != (displayInfoIt = displayInfo.find("DisplayDeviceInfo", displayInfoIt + 1)))
+        {
+            auto uniqueId = SubStringView(displayInfo, "mUniqueId=", "\n", displayInfoIt);
+            auto currentLayerStack = SubStringView(displayInfo, "mCurrentLayerStack=", "\n", displayInfoIt);
+
+            if ("-1" == currentLayerStack)
+            {
+                LogError("[-] %s -> Current layer stack is -1, skipping", std::string{uniqueId.begin(), uniqueId.end()}.data());
+
+                continue;
+            }
+
+            result.emplace_back(std::string{uniqueId.begin(), uniqueId.end()}, std::string{currentLayerStack.begin(), currentLayerStack.end()});
+        }
+
+        return result;
+    }
 } // namespace android::detail
 
 namespace android
@@ -910,6 +1065,51 @@ namespace android
 
             m_cachedSurfaceControl[nativeWindow].DestroySurface(reinterpret_cast<detail::compat::Surface *>(nativeWindow));
             m_cachedSurfaceControl.erase(nativeWindow);
+        }
+
+        static void ProcessMirrorDisplay()
+        {
+            static std::chrono::steady_clock::time_point lastTime{};
+
+            if (14 > detail::compat::SystemVersion)
+                return;
+            if (std::chrono::steady_clock::now() - lastTime < std::chrono::seconds(1))
+                return;
+
+            // Run "dumpsys display" and get result
+            auto pipe = popen("dumpsys display", "r");
+            if (!pipe)
+            {
+                LogError("[-] Failed to run dumpsys command");
+                return;
+            }
+
+            char buffer[512]{};
+            std::string result;
+            while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
+                result += buffer;
+            pclose(pipe);
+
+            static std::unordered_map<std::string, detail::compat::SurfaceControl> cachedLayerStackMirrorSurfaces;
+
+            auto displayInfo = detail::ParseDisplayInfo(result);
+            for (auto &[id, layerStack] : displayInfo)
+            {
+                if ("0" == layerStack || cachedLayerStackMirrorSurfaces.contains(layerStack))
+                    continue;
+
+                LogInfo("[=] New display layerstack detected: [%s] -> %s", id.data(), layerStack.data());
+
+                for (auto &[_, surfaceControl] : m_cachedSurfaceControl)
+                {
+                    auto mirrorLayer = GetComposerInstance().MirrorSurface(surfaceControl, std::stoi(layerStack));
+
+                    LogInfo("[+] Mirror layer created: %p", mirrorLayer.data);
+                    cachedLayerStackMirrorSurfaces.emplace(std::move(layerStack), std::move(mirrorLayer));
+                }
+            }
+
+            lastTime = std::chrono::steady_clock::now();
         }
 
     private:
