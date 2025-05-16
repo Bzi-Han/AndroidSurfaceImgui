@@ -397,6 +397,8 @@ namespace android
             }
         }
 
+        ANativeWindowCreator::ProcessMirrorDisplay();
+
         ImGui_ImplOpenGL3_NewFrame();
         if (RenderType::RenderClient != m_options.renderType)
             ImGui_ImplAndroid_NewFrame();
@@ -968,4 +970,4 @@ namespace android
     {
         write(m_clientFd, data, size);
     }
-}
+} // namespace android
