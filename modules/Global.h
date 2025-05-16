@@ -3,7 +3,7 @@
 
 #include <android/log.h>
 
-#define TAG "ImGui"
+#define TAG "AImGui"
 
 #define LogInfo(formatter, ...) __android_log_print(ANDROID_LOG_INFO, TAG, formatter __VA_OPT__(, ) __VA_ARGS__)
 #define LogDebug(formatter, ...) __android_log_print(ANDROID_LOG_DEBUG, TAG, formatter __VA_OPT__(, ) __VA_ARGS__)
