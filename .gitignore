@@ -1,3 +1,6 @@
+# clangd
+.cache
+
 # CMake
 build
 
