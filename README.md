@@ -16,11 +16,12 @@
 仅标注大版本，小版本没特别说明的都是支持的。
 
 | 古董版本 | 过渡版本 | 中间版本 | 新版本 |
-| --- | --- | --- | --- |
+| ------------ | ----------- | ------------ | ------------ |
 | ✅ Android5 | ✅ Android8 | ✅ Android9 | ✅ Android12 |
-| ✅ Android6 |  | ✅ Android10 | ✅ Android13 |
-| ✅ Android7 |  | ✅ Android11 | ✅ Android14 |
-|  |  |  | ✅ Android15 |
+| ✅ Android6 |              | ✅ Android10 | ✅ Android13 |
+| ✅ Android7 |              | ✅ Android11 | ✅ Android14 |
+|              |              |              | ✅ Android15 |
+|              |              |              | ✅ Android16 |
 
 ## 编译
 
