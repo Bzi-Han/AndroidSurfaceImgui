@@ -454,6 +454,80 @@ namespace android::detail::compat
 {
     constexpr size_t SupportedMinVersion = 5;
 
+    template <size_t length>
+    struct ApiInvokeDescriptor
+    {
+        size_t api;
+        size_t version;
+
+        consteval size_t DataHash(const std::string_view &data) const
+        {
+            constexpr size_t fnvOffsetBasis = 0x811C9DC5ull;
+            constexpr size_t fnvPrime = 0x1000193ull;
+            size_t hash = fnvOffsetBasis;
+
+            for (size_t i = 0; i < data.size(); ++i)
+            {
+                hash ^= static_cast<size_t>(data[i]);
+                hash *= fnvPrime;
+            }
+
+            return hash;
+        }
+
+        consteval bool operator==(const char *rhs) const
+        {
+            return api == DataHash(rhs);
+        }
+
+        consteval ApiInvokeDescriptor(const char (&apiInvokeName)[length])
+        {
+            const std::string_view apiInvokeNameView{apiInvokeName};
+            const auto invokeNameDelimiter = apiInvokeNameView.find("@");
+
+            if (std::string_view::npos == invokeNameDelimiter)
+            {
+                api = DataHash(apiInvokeName);
+                version = SupportedMinVersion;
+            }
+            else
+            {
+                const auto invokeName = apiInvokeNameView.substr(0, invokeNameDelimiter);
+                const auto invokeVersion = apiInvokeNameView.substr(invokeNameDelimiter + 1);
+
+                api = DataHash(invokeName);
+
+                version = 0;
+                for (char c : invokeVersion)
+                {
+                    if (c < '0' || c > '9')
+                        throw std::invalid_argument("Invalid version string, must be digits only");
+
+                    version = version * 10 + (c - '0');
+                }
+            }
+        }
+    };
+
+    template <ApiInvokeDescriptor descriptor>
+    constexpr auto ApiInvoker()
+    {
+        // libutils
+        if constexpr ("RefBase::IncStrong" == descriptor)
+            return reinterpret_cast<types::apis::libutils::generic::RefBase__IncStrong>(apis::libutils::RefBase::Api.IncStrong);
+        if constexpr ("RefBase::DecStrong" == descriptor)
+            return reinterpret_cast<types::apis::libutils::generic::RefBase__DecStrong>(apis::libutils::RefBase::Api.DecStrong);
+
+        if constexpr ("String8::Constructor" == descriptor)
+            return reinterpret_cast<types::apis::libutils::generic::String8__Constructor>(apis::libutils::String8::Api.Constructor);
+        if constexpr ("String8::Destructor" == descriptor)
+            return reinterpret_cast<types::apis::libutils::generic::String8__Destructor>(apis::libutils::String8::Api.Destructor);
+    }
+
+} // namespace android::detail::compat
+
+namespace android::detail::compat
+{
     static size_t SystemVersion = 13;
 
     struct String8
