@@ -620,7 +620,7 @@ namespace android::detail::compat
 
         void SetLayer(int32_t z)
         {
-            if (nullptr == data || 8 > SystemVersion)
+            if (nullptr == data || 8 < SystemVersion)
                 return;
 
             reinterpret_cast<types::apis::libgui::v5_v7::SurfaceControl__SetLayer>(apis::libgui::SurfaceControl::Api.SetLayer)(data, z);
