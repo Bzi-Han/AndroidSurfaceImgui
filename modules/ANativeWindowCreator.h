@@ -492,8 +492,11 @@ namespace android::detail::compat
             }
             else
             {
+                if ('v' != apiInvokeNameView[invokeNameDelimiter + 1])
+                    throw std::invalid_argument("Invalid version string, must start with 'v'");
+
                 const auto invokeName = apiInvokeNameView.substr(0, invokeNameDelimiter);
-                const auto invokeVersion = apiInvokeNameView.substr(invokeNameDelimiter + 1);
+                const auto invokeVersion = apiInvokeNameView.substr(invokeNameDelimiter + 2);
 
                 api = DataHash(invokeName);
 
@@ -631,7 +634,7 @@ namespace android::detail::compat
         LayerMetadata()
         {
             if (9 < SystemVersion)
-                ApiInvoker<"LayerMetadata::Constructor@10">()(data);
+                ApiInvoker<"LayerMetadata::Constructor@v10">()(data);
         }
 
         operator void *()
@@ -697,7 +700,7 @@ namespace android::detail::compat
             if (nullptr == data || 8 < SystemVersion)
                 return;
 
-            ApiInvoker<"SurfaceControl::SetLayer@8">()(data, z);
+            ApiInvoker<"SurfaceControl::SetLayer@v8">()(data, z);
         }
 
         void DestroySurface(Surface *surface)
@@ -707,7 +710,7 @@ namespace android::detail::compat
 
             ApiInvoker<"RefBase::DecStrong">()(reinterpret_cast<Surface *>(reinterpret_cast<size_t>(surface) - sizeof(std::max_align_t) / 2), this);
             if (7 > SystemVersion)
-                ApiInvoker<"Surface::DisConnect@6">()(reinterpret_cast<Surface *>(reinterpret_cast<size_t>(surface) - sizeof(std::max_align_t) / 2), -1);
+                ApiInvoker<"Surface::DisConnect@v6">()(reinterpret_cast<Surface *>(reinterpret_cast<size_t>(surface) - sizeof(std::max_align_t) / 2), -1);
             else
                 DisConnect();
             ApiInvoker<"RefBase::DecStrong">()(data, this);
@@ -756,9 +759,9 @@ namespace android::detail::compat
         int32_t Apply(bool synchronous, bool oneWay)
         {
             if (13 > SystemVersion)
-                return ApiInvoker<"SurfaceComposerClient::Transaction::Apply@12">()(data, synchronous);
+                return ApiInvoker<"SurfaceComposerClient::Transaction::Apply@v12">()(data, synchronous);
             else
-                return ApiInvoker<"SurfaceComposerClient::Transaction::Apply@13">()(data, synchronous, oneWay);
+                return ApiInvoker<"SurfaceComposerClient::Transaction::Apply@v13">()(data, synchronous, oneWay);
         }
     };
 
@@ -788,7 +791,7 @@ namespace android::detail::compat
             case 6:
             case 7:
             {
-                result = ApiInvoker<"SurfaceComposerClient::CreateSurface@7">()(data, windowName, width, height, pixelFormat, windowFlags);
+                result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v7">()(data, windowName, width, height, pixelFormat, windowFlags);
                 break;
             }
             case 8:
@@ -796,27 +799,27 @@ namespace android::detail::compat
             {
                 uint32_t windowType = 0;
 
-                result = ApiInvoker<"SurfaceComposerClient::CreateSurface@9">()(data, windowName, width, height, pixelFormat, windowFlags, parentHandle, windowType, 0);
+                result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v9">()(data, windowName, width, height, pixelFormat, windowFlags, parentHandle, windowType, 0);
                 break;
             }
             case 10:
             {
-                result = ApiInvoker<"SurfaceComposerClient::CreateSurface@10">()(data, windowName, width, height, pixelFormat, windowFlags, parentHandle, layerMetadata);
+                result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v10">()(data, windowName, width, height, pixelFormat, windowFlags, parentHandle, layerMetadata);
                 break;
             }
             case 11:
             {
-                result = ApiInvoker<"SurfaceComposerClient::CreateSurface@11">()(data, windowName, width, height, pixelFormat, windowFlags, parentHandle, layerMetadata, nullptr);
+                result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v11">()(data, windowName, width, height, pixelFormat, windowFlags, parentHandle, layerMetadata, nullptr);
                 break;
             }
             case 12:
             case 13:
             {
-                result = ApiInvoker<"SurfaceComposerClient::CreateSurface@13">()(data, windowName, width, height, pixelFormat, windowFlags, &parentHandle, layerMetadata, nullptr);
+                result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v13">()(data, windowName, width, height, pixelFormat, windowFlags, &parentHandle, layerMetadata, nullptr);
             }
             default:
             {
-                result = ApiInvoker<"SurfaceComposerClient::CreateSurface@14">()(data, windowName, width, height, pixelFormat, windowFlags, &parentHandle, layerMetadata, nullptr);
+                result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v14">()(data, windowName, width, height, pixelFormat, windowFlags, &parentHandle, layerMetadata, nullptr);
                 break;
             }
             }
@@ -846,10 +849,10 @@ namespace android::detail::compat
             {
                 SurfaceControl fakeSurface;
 
-                ApiInvoker<"SurfaceControl::DisConnect@14">()(pair->first);
+                ApiInvoker<"SurfaceControl::DisConnect@v14">()(pair->first);
                 ApiInvoker<"RefBase::DecStrong">()(pair->first, fakeSurface.data);
 
-                ApiInvoker<"SurfaceControl::DisConnect@14">()(pair->second);
+                ApiInvoker<"SurfaceControl::DisConnect@v14">()(pair->second);
                 ApiInvoker<"RefBase::DecStrong">()(pair->second, fakeSurface.data);
 
                 delete pair;
@@ -860,7 +863,7 @@ namespace android::detail::compat
             if (14 > compat::SystemVersion)
                 return {};
 
-            auto mirrorSurface = ApiInvoker<"SurfaceComposerClient::MirrorSurface@14">()(data, surface.data);
+            auto mirrorSurface = ApiInvoker<"SurfaceComposerClient::MirrorSurface@v14">()(data, surface.data);
             if (nullptr == mirrorSurface.get())
             {
                 LogError("[-] Failed to mirror surface: %u", layerStack);
@@ -910,18 +913,18 @@ namespace android::detail::compat
             types::StrongPointer<void> defaultDisplay;
 
             if (9 >= SystemVersion)
-                defaultDisplay = ApiInvoker<"SurfaceComposerClient::GetBuiltInDisplay@9">()(types::ui::DisplayType::DisplayIdMain);
+                defaultDisplay = ApiInvoker<"SurfaceComposerClient::GetBuiltInDisplay@v9">()(types::ui::DisplayType::DisplayIdMain);
             else
             {
                 if (14 > SystemVersion)
-                    defaultDisplay = ApiInvoker<"SurfaceComposerClient::GetInternalDisplayToken@13">()();
+                    defaultDisplay = ApiInvoker<"SurfaceComposerClient::GetInternalDisplayToken@v13">()();
                 else
                 {
-                    auto displayIds = ApiInvoker<"SurfaceComposerClient::GetPhysicalDisplayIds@14">()();
+                    auto displayIds = ApiInvoker<"SurfaceComposerClient::GetPhysicalDisplayIds@v14">()();
                     if (displayIds.empty())
                         return false;
 
-                    defaultDisplay = ApiInvoker<"SurfaceComposerClient::GetPhysicalDisplayToken@14">()(displayIds[0]);
+                    defaultDisplay = ApiInvoker<"SurfaceComposerClient::GetPhysicalDisplayToken@v14">()(displayIds[0]);
                 }
             }
 
@@ -929,11 +932,11 @@ namespace android::detail::compat
                 return false;
 
             if (11 <= SystemVersion)
-                return 0 == ApiInvoker<"SurfaceComposerClient::GetDisplayState@11">()(defaultDisplay, displayInfo);
+                return 0 == ApiInvoker<"SurfaceComposerClient::GetDisplayState@v11">()(defaultDisplay, displayInfo);
             else
             {
                 types::ui::DisplayInfo realDisplayInfo{};
-                if (0 != ApiInvoker<"SurfaceComposerClient::GetDisplayInfo@10">()(defaultDisplay, &realDisplayInfo))
+                if (0 != ApiInvoker<"SurfaceComposerClient::GetDisplayInfo@v10">()(defaultDisplay, &realDisplayInfo))
                     return false;
 
                 displayInfo->layerStackSpaceRect.width = realDisplayInfo.w;
@@ -946,12 +949,12 @@ namespace android::detail::compat
 
         void OpenGlobalTransaction()
         {
-            ApiInvoker<"SurfaceComposerClient::OpenGlobalTransaction@7">()();
+            ApiInvoker<"SurfaceComposerClient::OpenGlobalTransaction@v7">()();
         }
 
         void CloseGlobalTransaction(bool synchronous)
         {
-            ApiInvoker<"SurfaceComposerClient::CloseGlobalTransaction@7">()(synchronous);
+            ApiInvoker<"SurfaceComposerClient::CloseGlobalTransaction@v7">()(synchronous);
         }
     };
 } // namespace android::detail::compat
