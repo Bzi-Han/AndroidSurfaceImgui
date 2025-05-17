@@ -844,29 +844,28 @@ namespace android::detail
                     ApiDescriptor{12, 13, &apis::libgui::SurfaceComposerClient::Api.CreateSurface, "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8EjjijRKNS_2spINS_7IBinderEEENS_13LayerMetadataEPj"},
                     ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.CreateSurface, "_ZN7android21SurfaceComposerClient13createSurfaceERKNS_7String8EjjiiRKNS_2spINS_7IBinderEEENS_3gui13LayerMetadataEPj"},
 
-                    ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.MirrorSurface, "_ZN7android21SurfaceComposerClient13mirrorSurfaceEPNS_14SurfaceControlE"},
+                    ApiDescriptor{11, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.MirrorSurface, "_ZN7android21SurfaceComposerClient13mirrorSurfaceEPNS_14SurfaceControlE"},
 
                     ApiDescriptor{5, 9, &apis::libgui::SurfaceComposerClient::Api.GetBuiltInDisplay, "_ZN7android21SurfaceComposerClient17getBuiltInDisplayEi"},
                     ApiDescriptor{10, 13, &apis::libgui::SurfaceComposerClient::Api.GetInternalDisplayToken, "_ZN7android21SurfaceComposerClient23getInternalDisplayTokenEv"},
-                    ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.GetPhysicalDisplayIds, "_ZN7android21SurfaceComposerClient21getPhysicalDisplayIdsEv"},
-                    ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.GetPhysicalDisplayToken, "_ZN7android21SurfaceComposerClient23getPhysicalDisplayTokenENS_17PhysicalDisplayIdE"},
+                    ApiDescriptor{10, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.GetPhysicalDisplayIds, "_ZN7android21SurfaceComposerClient21getPhysicalDisplayIdsEv"},
+                    ApiDescriptor{12, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.GetPhysicalDisplayToken, "_ZN7android21SurfaceComposerClient23getPhysicalDisplayTokenENS_17PhysicalDisplayIdE"},
 
-                    ApiDescriptor{5, 10, &apis::libgui::SurfaceComposerClient::Api.GetDisplayInfo, "_ZN7android21SurfaceComposerClient14getDisplayInfoERKNS_2spINS_7IBinderEEEPNS_11DisplayInfoE"},
+                    ApiDescriptor{5, 11, &apis::libgui::SurfaceComposerClient::Api.GetDisplayInfo, "_ZN7android21SurfaceComposerClient14getDisplayInfoERKNS_2spINS_7IBinderEEEPNS_11DisplayInfoE"},
                     ApiDescriptor{11, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.GetDisplayState, "_ZN7android21SurfaceComposerClient15getDisplayStateERKNS_2spINS_7IBinderEEEPNS_2ui12DisplayStateE"},
 
                     // SurfaceComposerClient::Transaction
-                    ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Constructor, "_ZN7android21SurfaceComposerClient11TransactionC2Ev"},
+                    ApiDescriptor{12, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Constructor, "_ZN7android21SurfaceComposerClient11TransactionC2Ev"},
                     ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetLayer, "_ZN7android21SurfaceComposerClient11Transaction8setLayerERKNS_2spINS_14SurfaceControlEEEi"},
                     ApiDescriptor{12, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetTrustedOverlay, "_ZN7android21SurfaceComposerClient11Transaction17setTrustedOverlayERKNS_2spINS_14SurfaceControlEEEb"},
 
-                    ApiDescriptor{9, 11, &apis::libgui::SurfaceComposerClient::Transaction::Api.Apply, "_ZN7android21SurfaceComposerClient11Transaction5applyEbb"},
-                    ApiDescriptor{12, 12, &apis::libgui::SurfaceComposerClient::Transaction::Api.Apply, "_ZN7android21SurfaceComposerClient11Transaction5applyEb"},
+                    ApiDescriptor{9, 12, &apis::libgui::SurfaceComposerClient::Transaction::Api.Apply, "_ZN7android21SurfaceComposerClient11Transaction5applyEb"},
                     ApiDescriptor{13, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Apply, "_ZN7android21SurfaceComposerClient11Transaction5applyEbb"},
 
-                    ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetLayerStack, "_ZN7android21SurfaceComposerClient11Transaction13setLayerStackERKNS_2spINS_14SurfaceControlEEENS_2ui10LayerStackE"},
-                    ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Show, "_ZN7android21SurfaceComposerClient11Transaction4showERKNS_2spINS_14SurfaceControlEEE"},
-                    ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Hide, "_ZN7android21SurfaceComposerClient11Transaction4hideERKNS_2spINS_14SurfaceControlEEE"},
-                    ApiDescriptor{14, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Reparent, "_ZN7android21SurfaceComposerClient11Transaction8reparentERKNS_2spINS_14SurfaceControlEEES6_"},
+                    ApiDescriptor{13, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetLayerStack, "_ZN7android21SurfaceComposerClient11Transaction13setLayerStackERKNS_2spINS_14SurfaceControlEEENS_2ui10LayerStackE"},
+                    ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Show, "_ZN7android21SurfaceComposerClient11Transaction4showERKNS_2spINS_14SurfaceControlEEE"},
+                    ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Hide, "_ZN7android21SurfaceComposerClient11Transaction4hideERKNS_2spINS_14SurfaceControlEEE"},
+                    ApiDescriptor{12, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Reparent, "_ZN7android21SurfaceComposerClient11Transaction8reparentERKNS_2spINS_14SurfaceControlEEES6_"},
 
                     // SurfaceComposerClient::GlobalTransaction
                     ApiDescriptor{5, 8, &apis::libgui::SurfaceComposerClient::Api.OpenGlobalTransaction, "_ZN7android21SurfaceComposerClient21openGlobalTransactionEv"},
@@ -876,7 +875,8 @@ namespace android::detail
                     ApiDescriptor{5, 11, &apis::libgui::SurfaceControl::Api.GetSurface, "_ZNK7android14SurfaceControl10getSurfaceEv"},
                     ApiDescriptor{12, UINT_MAX, &apis::libgui::SurfaceControl::Api.GetSurface, "_ZN7android14SurfaceControl10getSurfaceEv"},
 
-                    ApiDescriptor{5, UINT_MAX, &apis::libgui::SurfaceControl::Api.DisConnect, "_ZN7android14SurfaceControl10disconnectEv"},
+                    ApiDescriptor{5, 7, &apis::libgui::Surface::Api.DisConnect, "_ZN7android7Surface10disconnectEi"},
+                    ApiDescriptor{7, UINT_MAX, &apis::libgui::SurfaceControl::Api.DisConnect, "_ZN7android14SurfaceControl10disconnectEv"},
 
                     ApiDescriptor{5, 5, &apis::libgui::SurfaceControl::Api.SetLayer, "_ZN7android14SurfaceControl8setLayerEi"},
                     ApiDescriptor{6, 7, &apis::libgui::SurfaceControl::Api.SetLayer, "_ZN7android14SurfaceControl8setLayerEj"},
