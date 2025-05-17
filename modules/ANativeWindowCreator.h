@@ -229,6 +229,15 @@ namespace android::detail::types::apis::libgui
         using SurfaceComposerClient__CloseGlobalTransaction__Static = void (*)(bool synchronous);
 
         using SurfaceControl__SetLayer = void *(*)(void *thiz, int32_t z);
+
+        // enum {
+        //     // The API number used to indicate the currently connected producer
+        //     CURRENTLY_CONNECTED_API = -1,
+        //
+        //     // The API number used to indicate that no producer is connected
+        //     NO_CONNECTED_API        = 0,
+        // };
+        using Surface__DisConnect = void *(*)(void *thiz, int api);
     } // namespace v5_v7
 
     namespace v8_v9
@@ -428,6 +437,16 @@ namespace android::detail::apis
 
             inline static ApiTable Api;
         };
+
+        struct Surface
+        {
+            struct ApiTable
+            {
+                void *DisConnect;
+            };
+
+            inline static ApiTable Api;
+        };
     } // namespace libgui
 } // namespace android::detail::apis
 
@@ -539,7 +558,10 @@ namespace android::detail::compat
                 return;
 
             reinterpret_cast<types::apis::libutils::generic::RefBase__DecStrong>(apis::libutils::RefBase::Api.DecStrong)(reinterpret_cast<Surface *>(reinterpret_cast<size_t>(surface) - sizeof(std::max_align_t) / 2), this);
-            DisConnect();
+            if (7 > SystemVersion)
+                reinterpret_cast<types::apis::libgui::v5_v7::Surface__DisConnect>(apis::libgui::Surface::Api.DisConnect)(reinterpret_cast<Surface *>(reinterpret_cast<size_t>(surface) - sizeof(std::max_align_t) / 2), -1);
+            else
+                DisConnect();
             reinterpret_cast<types::apis::libutils::generic::RefBase__DecStrong>(apis::libutils::RefBase::Api.DecStrong)(data, this);
         }
     };
