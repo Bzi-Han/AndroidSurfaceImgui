@@ -283,7 +283,7 @@ namespace android::detail::types::apis::libgui
         using SurfaceComposerClient__CreateSurface = StrongPointer<void> (*)(void *thiz, void *name, uint32_t w, uint32_t h, PixelFormat format, WindowFlags flags, void **parentHandle, void *metadata, uint32_t *outTransformHint);
     } // namespace v12_v13
 
-    namespace v14_v16
+    namespace v14_infinite
     {
         // SurfaceComposerClient::createSurface(const String8& name, uint32_t w, uint32_t h,
         //         PixelFormat format, int32_t flags,
@@ -291,17 +291,17 @@ namespace android::detail::types::apis::libgui
         //         LayerMetadata metadata,
         //         uint32_t* outTransformHint)
         using SurfaceComposerClient__CreateSurface = StrongPointer<void> (*)(void *thiz, void *name, uint32_t w, uint32_t h, PixelFormat format, WindowFlags flags, void **parentHandle, void *metadata, uint32_t *outTransformHint);
-    } // namespace v14_v16
+    } // namespace v14_infinite
 
     namespace v8_v12
     {
         using SurfaceComposerClient__Transaction__Apply = int32_t (*)(void *thiz, bool synchronous);
     } // namespace v8_v12
 
-    namespace v13_v16
+    namespace v13_infinite
     {
         using SurfaceComposerClient__Transaction__Apply = int32_t (*)(void *thiz, bool synchronous, bool oneWay);
-    } // namespace v13_v16
+    } // namespace v13_infinite
 
     namespace generic
     {
