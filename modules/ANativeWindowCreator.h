@@ -522,6 +522,80 @@ namespace android::detail::compat
             return reinterpret_cast<types::apis::libutils::generic::String8__Constructor>(apis::libutils::String8::Api.Constructor);
         if constexpr ("String8::Destructor" == descriptor)
             return reinterpret_cast<types::apis::libutils::generic::String8__Destructor>(apis::libutils::String8::Api.Destructor);
+
+        // libgui
+        if constexpr ("LayerMetadata::Constructor" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::LayerMetadata__Constructor>(apis::libgui::LayerMetadata::Api.Constructor);
+
+        if constexpr ("SurfaceControl::GetSurface" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceControl__GetSurface>(apis::libgui::SurfaceControl::Api.GetSurface);
+        if constexpr ("SurfaceControl::DisConnect" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceControl__DisConnect>(apis::libgui::SurfaceControl::Api.DisConnect);
+        if constexpr ("SurfaceControl::SetLayer" == descriptor)
+            return reinterpret_cast<types::apis::libgui::v5_v7::SurfaceControl__SetLayer>(apis::libgui::SurfaceControl::Api.SetLayer);
+
+        if constexpr ("Surface::DisConnect" == descriptor)
+            return reinterpret_cast<types::apis::libgui::v5_v7::Surface__DisConnect>(apis::libgui::Surface::Api.DisConnect);
+
+        if constexpr ("SurfaceComposerClient::Transaction::Constructor" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__Constructor>(apis::libgui::SurfaceComposerClient::Transaction::Api.Constructor);
+        if constexpr ("SurfaceComposerClient::Transaction::SetLayer" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetLayer>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetLayer);
+        if constexpr ("SurfaceComposerClient::Transaction::SetLayerStack" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetLayerStack>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetLayerStack);
+        if constexpr ("SurfaceComposerClient::Transaction::SetTrustedOverlay" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetTrustedOverlay>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetTrustedOverlay);
+        if constexpr ("SurfaceComposerClient::Transaction::Show" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__Show>(apis::libgui::SurfaceComposerClient::Transaction::Api.Show);
+        if constexpr ("SurfaceComposerClient::Transaction::Hide" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__Hide>(apis::libgui::SurfaceComposerClient::Transaction::Api.Hide);
+        if constexpr ("SurfaceComposerClient::Transaction::Reparent" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__Reparent>(apis::libgui::SurfaceComposerClient::Transaction::Api.Reparent);
+        if constexpr ("SurfaceComposerClient::Transaction::Apply" == descriptor)
+        {
+            if constexpr (8 <= descriptor.version && 12 >= descriptor.version)
+                return reinterpret_cast<types::apis::libgui::v8_v12::SurfaceComposerClient__Transaction__Apply>(apis::libgui::SurfaceComposerClient::Transaction::Api.Apply);
+            else if constexpr (13 <= descriptor.version)
+                return reinterpret_cast<types::apis::libgui::v13_infinite::SurfaceComposerClient__Transaction__Apply>(apis::libgui::SurfaceComposerClient::Transaction::Api.Apply);
+        }
+
+        if constexpr ("SurfaceComposerClient::Constructor" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Constructor>(apis::libgui::SurfaceComposerClient::Api.Constructor);
+        if constexpr ("SurfaceComposerClient::CreateSurface" == descriptor)
+        {
+            if constexpr (5 <= descriptor.version && 7 >= descriptor.version)
+                return reinterpret_cast<types::apis::libgui::v5_v7::SurfaceComposerClient__CreateSurface>(apis::libgui::SurfaceComposerClient::Api.CreateSurface);
+            else if constexpr (8 <= descriptor.version && 9 >= descriptor.version)
+                return reinterpret_cast<types::apis::libgui::v8_v9::SurfaceComposerClient__CreateSurface>(apis::libgui::SurfaceComposerClient::Api.CreateSurface);
+            else if constexpr (10 == descriptor.version)
+                return reinterpret_cast<types::apis::libgui::v10::SurfaceComposerClient__CreateSurface>(apis::libgui::SurfaceComposerClient::Api.CreateSurface);
+            else if constexpr (11 == descriptor.version)
+                return reinterpret_cast<types::apis::libgui::v11::SurfaceComposerClient__CreateSurface>(apis::libgui::SurfaceComposerClient::Api.CreateSurface);
+            else if constexpr (12 <= descriptor.version && 13 >= descriptor.version)
+                return reinterpret_cast<types::apis::libgui::v12_v13::SurfaceComposerClient__CreateSurface>(apis::libgui::SurfaceComposerClient::Api.CreateSurface);
+            else if constexpr (14 <= descriptor.version)
+                return reinterpret_cast<types::apis::libgui::v14_infinite::SurfaceComposerClient__CreateSurface>(apis::libgui::SurfaceComposerClient::Api.CreateSurface);
+        }
+        if constexpr ("SurfaceComposerClient::MirrorSurface" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__MirrorSurface>(apis::libgui::SurfaceComposerClient::Api.MirrorSurface);
+
+        if constexpr ("SurfaceComposerClient::GetBuiltInDisplay" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__GetBuiltInDisplay__Static>(apis::libgui::SurfaceComposerClient::Api.GetBuiltInDisplay);
+        if constexpr ("SurfaceComposerClient::GetInternalDisplayToken" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__GetInternalDisplayToken__Static>(apis::libgui::SurfaceComposerClient::Api.GetInternalDisplayToken);
+        if constexpr ("SurfaceComposerClient::GetPhysicalDisplayIds" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__GetPhysicalDisplayIds__Static>(apis::libgui::SurfaceComposerClient::Api.GetPhysicalDisplayIds);
+        if constexpr ("SurfaceComposerClient::GetPhysicalDisplayToken" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__GetPhysicalDisplayToken__Static>(apis::libgui::SurfaceComposerClient::Api.GetPhysicalDisplayToken);
+        if constexpr ("SurfaceComposerClient::GetDisplayState" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__GetDisplayState__Static>(apis::libgui::SurfaceComposerClient::Api.GetDisplayState);
+        if constexpr ("SurfaceComposerClient::GetDisplayInfo" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__GetDisplayInfo__Static>(apis::libgui::SurfaceComposerClient::Api.GetDisplayInfo);
+
+        if constexpr ("SurfaceComposerClient::OpenGlobalTransaction" == descriptor)
+            return reinterpret_cast<types::apis::libgui::v5_v7::SurfaceComposerClient__OpenGlobalTransaction__Static>(apis::libgui::SurfaceComposerClient::Api.OpenGlobalTransaction);
+        if constexpr ("SurfaceComposerClient::CloseGlobalTransaction" == descriptor)
+            return reinterpret_cast<types::apis::libgui::v5_v7::SurfaceComposerClient__CloseGlobalTransaction__Static>(apis::libgui::SurfaceComposerClient::Api.CloseGlobalTransaction);
     }
 
 } // namespace android::detail::compat
