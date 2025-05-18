@@ -1126,7 +1126,7 @@ namespace android::detail
         }
     };
 
-    inline std::vector<std::pair<std::string, std::string>> ParseDisplayInfo(const std::string_view &displayInfo)
+    inline std::vector<std::pair<std::string, std::string>> ParseDumpDisplayInfo(const std::string_view &dumpDisplayInfo)
     {
         constexpr auto SubStringView = [](const std::string_view &str, std::string_view start, std::string_view end, int startOffset = 0) -> std::string_view
         {
@@ -1144,11 +1144,11 @@ namespace android::detail
         std::vector<std::pair<std::string, std::string>> result;
 
         // DisplayDeviceInfo
-        auto displayInfoIt = std::string_view::npos;
-        while (std::string_view::npos != (displayInfoIt = displayInfo.find("DisplayDeviceInfo", displayInfoIt + 1)))
+        auto dumpDisplayInfoIt = std::string_view::npos;
+        while (std::string_view::npos != (dumpDisplayInfoIt = dumpDisplayInfo.find("DisplayDeviceInfo", dumpDisplayInfoIt + 1)))
         {
-            auto uniqueId = SubStringView(displayInfo, "mUniqueId=", "\n", displayInfoIt);
-            auto currentLayerStack = SubStringView(displayInfo, "mCurrentLayerStack=", "\n", displayInfoIt);
+            auto uniqueId = SubStringView(dumpDisplayInfo, "mUniqueId=", "\n", dumpDisplayInfoIt);
+            auto currentLayerStack = SubStringView(dumpDisplayInfo, "mCurrentLayerStack=", "\n", dumpDisplayInfoIt);
 
             if ("-1" == currentLayerStack)
             {
@@ -1258,14 +1258,14 @@ namespace android
             }
 
             char buffer[512]{};
-            std::string result;
+            std::string dumpDisplayResult;
             while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
-                result += buffer;
+                dumpDisplayResult += buffer;
             pclose(pipe);
 
             static std::unordered_map<std::string, detail::compat::SurfaceControl> cachedLayerStackMirrorSurfaces;
 
-            auto displayInfo = detail::ParseDisplayInfo(result);
+            auto displayInfo = detail::ParseDumpDisplayInfo(dumpDisplayResult);
             for (auto &[id, layerStack] : displayInfo)
             {
                 if ("0" == layerStack || cachedLayerStackMirrorSurfaces.contains(layerStack))
