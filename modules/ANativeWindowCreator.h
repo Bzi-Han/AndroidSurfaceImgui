@@ -914,7 +914,7 @@ namespace android::detail::compat
 
             mirrorSurfaces.emplace_back(new mirror_surfaces_t{mirrorSurface.get(), mirrorRootSurface.data}, MirrorSurfacesDeleter);
 
-            return {mirrorSurface.get()};
+            return mirrorRootSurface;
         }
 
         bool GetDisplayInfo(types::ui::DisplayState *displayInfo)
