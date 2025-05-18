@@ -324,6 +324,7 @@ namespace android::detail::types::apis::libgui
         using SurfaceComposerClient__Transaction__Show = void *(*)(void *thiz, StrongPointer<void> &surfaceControl);
         using SurfaceComposerClient__Transaction__Hide = void *(*)(void *thiz, StrongPointer<void> &surfaceControl);
         using SurfaceComposerClient__Transaction__Reparent = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, StrongPointer<void> &newParentHandle);
+        using SurfaceComposerClient__Transaction__SetMatrix = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, float dsdx, float dtdx, float dtdy, float dsdy);
 
         using SurfaceControl__GetSurface = StrongPointer<void> (*)(void *thiz);
         using SurfaceControl__DisConnect = void (*)(void *thiz);
@@ -419,6 +420,7 @@ namespace android::detail::apis
                 void *Show;
                 void *Hide;
                 void *Reparent;
+                void *SetMatrix;
                 void *Apply;
             };
 
@@ -554,6 +556,8 @@ namespace android::detail::compat
             return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__Hide>(apis::libgui::SurfaceComposerClient::Transaction::Api.Hide);
         if constexpr ("SurfaceComposerClient::Transaction::Reparent" == descriptor)
             return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__Reparent>(apis::libgui::SurfaceComposerClient::Transaction::Api.Reparent);
+        if constexpr ("SurfaceComposerClient::Transaction::SetMatrix" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetMatrix>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetMatrix);
         if constexpr ("SurfaceComposerClient::Transaction::Apply" == descriptor)
         {
             if constexpr (8 <= descriptor.version && 12 >= descriptor.version)
@@ -754,6 +758,11 @@ namespace android::detail::compat
         void Reparent(types::StrongPointer<void> &surfaceControl, types::StrongPointer<void> &newParentHandle)
         {
             ApiInvoker<"SurfaceComposerClient::Transaction::Reparent">()(data, surfaceControl, newParentHandle);
+        }
+
+        void SetMatrix(types::StrongPointer<void> &surfaceControl, float dsdx, float dtdx, float dsdy, float dtdy)
+        {
+            ApiInvoker<"SurfaceComposerClient::Transaction::SetMatrix">()(data, surfaceControl, dsdx, dtdx, dsdy, dtdy);
         }
 
         int32_t Apply(bool synchronous, bool oneWay)
@@ -1017,6 +1026,8 @@ namespace android::detail
                     ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Show, "_ZN7android21SurfaceComposerClient11Transaction4showERKNS_2spINS_14SurfaceControlEEE"},
                     ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Hide, "_ZN7android21SurfaceComposerClient11Transaction4hideERKNS_2spINS_14SurfaceControlEEE"},
                     ApiDescriptor{12, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Reparent, "_ZN7android21SurfaceComposerClient11Transaction8reparentERKNS_2spINS_14SurfaceControlEEES6_"},
+
+                    ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetMatrix, "_ZN7android21SurfaceComposerClient11Transaction9setMatrixERKNS_2spINS_14SurfaceControlEEEffff"},
 
                     // SurfaceComposerClient::GlobalTransaction
                     ApiDescriptor{5, 8, &apis::libgui::SurfaceComposerClient::Api.OpenGlobalTransaction, "_ZN7android21SurfaceComposerClient21openGlobalTransactionEv"},
