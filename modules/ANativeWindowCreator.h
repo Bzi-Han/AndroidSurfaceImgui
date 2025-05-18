@@ -917,6 +917,14 @@ namespace android::detail::compat
             return mirrorRootSurface;
         }
 
+        void ZoomSurface(SurfaceControl &surface, float scaleX, float scaleY)
+        {
+            static SurfaceComposerClientTransaction transaction;
+
+            transaction.SetMatrix(surface, scaleX, 0.f, 0.f, scaleY);
+            transaction.Apply(false, true);
+        }
+
         bool GetDisplayInfo(types::ui::DisplayState *displayInfo)
         {
             types::StrongPointer<void> defaultDisplay;
