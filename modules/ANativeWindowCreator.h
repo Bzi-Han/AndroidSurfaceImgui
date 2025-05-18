@@ -39,6 +39,7 @@
 #include <array>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 
 #ifndef LOGTAG
 #define LOGTAG "AImGui"
@@ -1318,22 +1319,50 @@ namespace android
                 dumpDisplayResult += buffer;
             pclose(pipe);
 
-            static std::unordered_map<std::string, detail::compat::SurfaceControl> cachedLayerStackMirrorSurfaces;
+            static std::unordered_map<uint32_t, detail::compat::SurfaceControl> cachedLayerStackMirrorSurfaces;
+            static std::unordered_set<uint32_t> cachedLayerStackScales;
 
-            auto displayInfo = detail::ParseDumpDisplayInfo(dumpDisplayResult);
-            for (auto &[id, layerStack] : displayInfo)
+            auto dumpDisplayInfos = detail::ParseDumpDisplayInfo(dumpDisplayResult);
+            for (auto &displayInfo : dumpDisplayInfos)
             {
-                if ("0" == layerStack || cachedLayerStackMirrorSurfaces.contains(layerStack))
+                // Update multi display layer scale
+                static int32_t builtinDisplayWidth = -1, builtinDisplayHeight = -1;
+                if (0 == displayInfo.currentLayerStack)
+                {
+                    builtinDisplayWidth = displayInfo.currentLayerStackRect.right;
+                    builtinDisplayHeight = displayInfo.currentLayerStackRect.bottom;
+                }
+
+                // Process mirror display
+                if (0 == displayInfo.currentLayerStack)
                     continue;
 
-                LogInfo("[=] New display layerstack detected: [%s] -> %s", id.data(), layerStack.data());
-
-                for (auto &[_, surfaceControl] : m_cachedSurfaceControl)
+                if (!cachedLayerStackMirrorSurfaces.contains(displayInfo.currentLayerStack))
                 {
-                    auto mirrorLayer = GetComposerInstance().MirrorSurface(surfaceControl, std::stoi(layerStack));
+                    LogInfo("[=] New display layerstack detected: [%s] -> %u", displayInfo.uniqueId.data(), displayInfo.currentLayerStack);
 
-                    LogInfo("[+] Mirror layer created: %p", mirrorLayer.data);
-                    cachedLayerStackMirrorSurfaces.emplace(std::move(layerStack), std::move(mirrorLayer));
+                    for (auto &[_, surfaceControl] : m_cachedSurfaceControl)
+                    {
+                        auto mirrorLayer = GetComposerInstance().MirrorSurface(surfaceControl, displayInfo.currentLayerStack);
+
+                        LogInfo("[+] Mirror layer created: %p", mirrorLayer.data);
+                        cachedLayerStackMirrorSurfaces.emplace(displayInfo.currentLayerStack, std::move(mirrorLayer));
+                    }
+                }
+
+                if (-1 != builtinDisplayWidth && -1 != builtinDisplayHeight && cachedLayerStackMirrorSurfaces.contains(displayInfo.currentLayerStack))
+                {
+                    if ((displayInfo.currentLayerStackRect.right != builtinDisplayWidth || displayInfo.currentLayerStackRect.bottom != builtinDisplayHeight) && !cachedLayerStackScales.contains(displayInfo.currentLayerStack))
+                    {
+                        auto &mirrorLayer = cachedLayerStackMirrorSurfaces.at(displayInfo.currentLayerStack);
+
+                        float scaleX = static_cast<float>(displayInfo.currentLayerStackRect.right) / builtinDisplayWidth;
+                        float scaleY = static_cast<float>(displayInfo.currentLayerStackRect.bottom) / builtinDisplayHeight;
+                        GetComposerInstance().ZoomSurface(mirrorLayer, scaleX, scaleY);
+
+                        cachedLayerStackScales.emplace(displayInfo.currentLayerStack);
+                        LogInfo("[=] Update mirror layer scale: %p %f %f", mirrorLayer.data, scaleX, scaleY);
+                    }
                 }
             }
 
