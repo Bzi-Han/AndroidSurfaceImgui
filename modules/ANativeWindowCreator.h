@@ -1145,7 +1145,42 @@ namespace android::detail
         }
     };
 
-    inline std::vector<std::pair<std::string, std::string>> ParseDumpDisplayInfo(const std::string_view &dumpDisplayInfo)
+    struct DumpDisplayInfo
+    {
+        std::string uniqueId;
+        uint32_t currentLayerStack;
+        struct
+        {
+            int32_t left;
+            int32_t top;
+            int32_t right;
+            int32_t bottom;
+        } currentLayerStackRect;
+
+        static DumpDisplayInfo MakeFromRawDumpInfo(const std::string_view &uniqueId, const std::string_view &currentLayerStack, const std::string_view &currentLayerStackRect)
+        {
+            DumpDisplayInfo result;
+
+            result.uniqueId = std::string{uniqueId.begin(), uniqueId.end()};
+            result.currentLayerStack = static_cast<uint32_t>(std::stoul(std::string{currentLayerStack.begin(), currentLayerStack.end()}));
+
+            auto leftPos = currentLayerStackRect.find("(") + 1;
+            auto topPos = currentLayerStackRect.find(", ", leftPos);
+            auto rightPos = currentLayerStackRect.find(" - ", topPos + 2);
+            auto bottomPos = currentLayerStackRect.find(", ", rightPos + 3);
+            auto endPos = currentLayerStackRect.find(")", bottomPos + 2);
+
+            // Don't check it, even though it might cause a crash.
+            result.currentLayerStackRect.left = std::stoi(std::string{currentLayerStackRect.begin() + leftPos, currentLayerStackRect.begin() + topPos});
+            result.currentLayerStackRect.top = std::stoi(std::string{currentLayerStackRect.begin() + topPos + 2, currentLayerStackRect.begin() + rightPos});
+            result.currentLayerStackRect.right = std::stoi(std::string{currentLayerStackRect.begin() + rightPos + 3, currentLayerStackRect.begin() + bottomPos});
+            result.currentLayerStackRect.bottom = std::stoi(std::string{currentLayerStackRect.begin() + bottomPos + 2, currentLayerStackRect.begin() + endPos});
+
+            return result;
+        }
+    };
+
+    inline std::vector<DumpDisplayInfo> ParseDumpDisplayInfo(const std::string_view &dumpDisplayInfo)
     {
         constexpr auto SubStringView = [](const std::string_view &str, std::string_view start, std::string_view end, int startOffset = 0) -> std::string_view
         {
@@ -1160,7 +1195,7 @@ namespace android::detail
             return str.substr(startIt + start.size(), endIt - startIt - start.size());
         };
 
-        std::vector<std::pair<std::string, std::string>> result;
+        std::vector<DumpDisplayInfo> result;
 
         // DisplayDeviceInfo
         auto dumpDisplayInfoIt = std::string_view::npos;
@@ -1168,6 +1203,7 @@ namespace android::detail
         {
             auto uniqueId = SubStringView(dumpDisplayInfo, "mUniqueId=", "\n", dumpDisplayInfoIt);
             auto currentLayerStack = SubStringView(dumpDisplayInfo, "mCurrentLayerStack=", "\n", dumpDisplayInfoIt);
+            auto currentLayerStackRect = SubStringView(dumpDisplayInfo, "mCurrentLayerStackRect=", "\n", dumpDisplayInfoIt);
 
             if ("-1" == currentLayerStack)
             {
@@ -1176,7 +1212,7 @@ namespace android::detail
                 continue;
             }
 
-            result.emplace_back(std::string{uniqueId.begin(), uniqueId.end()}, std::string{currentLayerStack.begin(), currentLayerStack.end()});
+            result.push_back(DumpDisplayInfo::MakeFromRawDumpInfo(uniqueId, currentLayerStack, currentLayerStackRect));
         }
 
         return result;
