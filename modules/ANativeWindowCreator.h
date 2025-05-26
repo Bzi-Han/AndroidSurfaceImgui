@@ -326,6 +326,7 @@ namespace android::detail::types::apis::libgui
         using SurfaceComposerClient__Transaction__Hide = void *(*)(void *thiz, StrongPointer<void> &surfaceControl);
         using SurfaceComposerClient__Transaction__Reparent = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, StrongPointer<void> &newParentHandle);
         using SurfaceComposerClient__Transaction__SetMatrix = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, float dsdx, float dtdx, float dtdy, float dsdy);
+        using SurfaceComposerClient__Transaction__SetPosition = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, float x, float y);
 
         using SurfaceControl__GetSurface = StrongPointer<void> (*)(void *thiz);
         using SurfaceControl__DisConnect = void (*)(void *thiz);
@@ -422,6 +423,7 @@ namespace android::detail::apis
                 void *Hide;
                 void *Reparent;
                 void *SetMatrix;
+                void *SetPosition;
                 void *Apply;
             };
 
@@ -559,6 +561,8 @@ namespace android::detail::compat
             return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__Reparent>(apis::libgui::SurfaceComposerClient::Transaction::Api.Reparent);
         if constexpr ("SurfaceComposerClient::Transaction::SetMatrix" == descriptor)
             return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetMatrix>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetMatrix);
+        if constexpr ("SurfaceComposerClient::Transaction::SetPosition" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetPosition>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetPosition);
         if constexpr ("SurfaceComposerClient::Transaction::Apply" == descriptor)
         {
             if constexpr (8 <= descriptor.version && 12 >= descriptor.version)
@@ -766,6 +770,11 @@ namespace android::detail::compat
             ApiInvoker<"SurfaceComposerClient::Transaction::SetMatrix">()(data, surfaceControl, dsdx, dtdx, dsdy, dtdy);
         }
 
+        void SetPosition(types::StrongPointer<void> &surfaceControl, float x, float y)
+        {
+            ApiInvoker<"SurfaceComposerClient::Transaction::SetPosition">()(data, surfaceControl, x, y);
+        }
+
         int32_t Apply(bool synchronous, bool oneWay)
         {
             if (13 > SystemVersion)
@@ -926,6 +935,14 @@ namespace android::detail::compat
             transaction.Apply(false, true);
         }
 
+        void MoveSurface(SurfaceControl &surface, float x, float y)
+        {
+            static SurfaceComposerClientTransaction transaction;
+
+            transaction.SetPosition(surface, x, y);
+            transaction.Apply(false, true);
+        }
+
         bool GetDisplayInfo(types::ui::DisplayState *displayInfo)
         {
             types::StrongPointer<void> defaultDisplay;
@@ -1037,6 +1054,7 @@ namespace android::detail
                     ApiDescriptor{12, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Reparent, "_ZN7android21SurfaceComposerClient11Transaction8reparentERKNS_2spINS_14SurfaceControlEEES6_"},
 
                     ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetMatrix, "_ZN7android21SurfaceComposerClient11Transaction9setMatrixERKNS_2spINS_14SurfaceControlEEEffff"},
+                    ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetPosition, "_ZN7android21SurfaceComposerClient11Transaction11setPositionERKNS_2spINS_14SurfaceControlEEEff"},
 
                     // SurfaceComposerClient::GlobalTransaction
                     ApiDescriptor{5, 8, &apis::libgui::SurfaceComposerClient::Api.OpenGlobalTransaction, "_ZN7android21SurfaceComposerClient21openGlobalTransactionEv"},
@@ -1181,6 +1199,15 @@ namespace android::detail
         }
     };
 
+    struct MirrorLayerTransform
+    {
+        bool isAspectRatioSimilar;
+        float widthScale;
+        float heightScale;
+        float offsetX;
+        float offsetY;
+    };
+
     inline std::vector<DumpDisplayInfo> ParseDumpDisplayInfo(const std::string_view &dumpDisplayInfo)
     {
         constexpr auto SubStringView = [](const std::string_view &str, std::string_view start, std::string_view end, int startOffset = 0) -> std::string_view
@@ -1214,6 +1241,33 @@ namespace android::detail
             }
 
             result.push_back(DumpDisplayInfo::MakeFromRawDumpInfo(uniqueId, currentLayerStack, currentLayerStackRect));
+        }
+
+        return result;
+    }
+
+    inline MirrorLayerTransform CalcMirrorLayerTransform(float targetWidth, float targetHeight, float sourceWidth, float sourceHeight, float epsilon = 0.002)
+    {
+        if (0.f == targetHeight || 0.f == sourceHeight)
+            throw std::runtime_error("[-] Invalid height");
+
+        MirrorLayerTransform result{
+            .isAspectRatioSimilar = std::abs(targetWidth / targetHeight - sourceWidth / sourceHeight) < epsilon,
+            .widthScale = sourceWidth / targetWidth,
+            .heightScale = sourceHeight / targetHeight,
+        };
+        if (result.isAspectRatioSimilar)
+            return result;
+
+        if (result.widthScale > result.heightScale)
+        {
+            result.offsetX = (sourceWidth - targetWidth * result.heightScale) / 2;
+            result.widthScale = result.heightScale;
+        }
+        else
+        {
+            result.offsetY = (sourceHeight - targetHeight * result.widthScale) / 2;
+            result.heightScale = result.widthScale;
         }
 
         return result;
@@ -1354,14 +1408,34 @@ namespace android
                 {
                     if ((displayInfo.currentLayerStackRect.right != builtinDisplayWidth || displayInfo.currentLayerStackRect.bottom != builtinDisplayHeight) && !cachedLayerStackScales.contains(displayInfo.currentLayerStack))
                     {
-                        auto &mirrorLayer = cachedLayerStackMirrorSurfaces.at(displayInfo.currentLayerStack);
+                        LogInfo("[=] Display layerstack size changed[%d x %d]: %u -> %d x %d",
+                                builtinDisplayWidth,
+                                builtinDisplayHeight,
+                                displayInfo.currentLayerStack,
+                                displayInfo.currentLayerStackRect.right,
+                                displayInfo.currentLayerStackRect.bottom);
 
-                        float scaleX = static_cast<float>(displayInfo.currentLayerStackRect.right) / builtinDisplayWidth;
-                        float scaleY = static_cast<float>(displayInfo.currentLayerStackRect.bottom) / builtinDisplayHeight;
-                        GetComposerInstance().ZoomSurface(mirrorLayer, scaleX, scaleY);
+                        auto &composerInstance = GetComposerInstance();
+                        auto &mirrorLayer = cachedLayerStackMirrorSurfaces.at(displayInfo.currentLayerStack);
+                        auto transformParams = detail::CalcMirrorLayerTransform(
+                            builtinDisplayWidth,
+                            builtinDisplayHeight,
+                            displayInfo.currentLayerStackRect.right,
+                            displayInfo.currentLayerStackRect.bottom);
+
+                        composerInstance.ZoomSurface(mirrorLayer, transformParams.widthScale, transformParams.heightScale);
+
+                        if (!transformParams.isAspectRatioSimilar)
+                            composerInstance.MoveSurface(mirrorLayer, transformParams.offsetX, transformParams.offsetY);
 
                         cachedLayerStackScales.emplace(displayInfo.currentLayerStack);
-                        LogInfo("[=] Update mirror layer scale: %p %f %f", mirrorLayer.data, scaleX, scaleY);
+                        LogInfo("[+] Transform mirror layer:%p similar:%d width:%f height:%f x:%f y:%f",
+                                mirrorLayer.data,
+                                transformParams.isAspectRatioSimilar,
+                                transformParams.widthScale,
+                                transformParams.heightScale,
+                                transformParams.offsetX,
+                                transformParams.offsetY);
                     }
                 }
             }
