@@ -1199,6 +1199,15 @@ namespace android::detail
         }
     };
 
+    struct MirrorLayerTransform
+    {
+        bool isAspectRatioSimilar;
+        float widthScale;
+        float heightScale;
+        float offsetX;
+        float offsetY;
+    };
+
     inline std::vector<DumpDisplayInfo> ParseDumpDisplayInfo(const std::string_view &dumpDisplayInfo)
     {
         constexpr auto SubStringView = [](const std::string_view &str, std::string_view start, std::string_view end, int startOffset = 0) -> std::string_view
@@ -1232,6 +1241,33 @@ namespace android::detail
             }
 
             result.push_back(DumpDisplayInfo::MakeFromRawDumpInfo(uniqueId, currentLayerStack, currentLayerStackRect));
+        }
+
+        return result;
+    }
+
+    inline MirrorLayerTransform CalcMirrorLayerTransform(float targetWidth, float targetHeight, float sourceWidth, float sourceHeight, float epsilon = 0.002)
+    {
+        if (0.f == targetHeight || 0.f == sourceHeight)
+            throw std::runtime_error("[-] Invalid height");
+
+        MirrorLayerTransform result{
+            .isAspectRatioSimilar = std::abs(targetWidth / targetHeight - sourceWidth / sourceHeight) < epsilon,
+            .widthScale = sourceWidth / targetWidth,
+            .heightScale = sourceHeight / targetHeight,
+        };
+        if (result.isAspectRatioSimilar)
+            return result;
+
+        if (result.widthScale > result.heightScale)
+        {
+            result.offsetX = (sourceWidth - targetWidth * result.heightScale) / 2;
+            result.widthScale = result.heightScale;
+        }
+        else
+        {
+            result.offsetY = (sourceHeight - targetHeight * result.widthScale) / 2;
+            result.heightScale = result.widthScale;
         }
 
         return result;
