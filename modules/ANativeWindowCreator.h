@@ -935,6 +935,14 @@ namespace android::detail::compat
             transaction.Apply(false, true);
         }
 
+        void MoveSurface(SurfaceControl &surface, float x, float y)
+        {
+            static SurfaceComposerClientTransaction transaction;
+
+            transaction.SetPosition(surface, x, y);
+            transaction.Apply(false, true);
+        }
+
         bool GetDisplayInfo(types::ui::DisplayState *displayInfo)
         {
             types::StrongPointer<void> defaultDisplay;
