@@ -1408,14 +1408,34 @@ namespace android
                 {
                     if ((displayInfo.currentLayerStackRect.right != builtinDisplayWidth || displayInfo.currentLayerStackRect.bottom != builtinDisplayHeight) && !cachedLayerStackScales.contains(displayInfo.currentLayerStack))
                     {
-                        auto &mirrorLayer = cachedLayerStackMirrorSurfaces.at(displayInfo.currentLayerStack);
+                        LogInfo("[=] Display layerstack size changed[%d x %d]: %u -> %d x %d",
+                                builtinDisplayWidth,
+                                builtinDisplayHeight,
+                                displayInfo.currentLayerStack,
+                                displayInfo.currentLayerStackRect.right,
+                                displayInfo.currentLayerStackRect.bottom);
 
-                        float scaleX = static_cast<float>(displayInfo.currentLayerStackRect.right) / builtinDisplayWidth;
-                        float scaleY = static_cast<float>(displayInfo.currentLayerStackRect.bottom) / builtinDisplayHeight;
-                        GetComposerInstance().ZoomSurface(mirrorLayer, scaleX, scaleY);
+                        auto &composerInstance = GetComposerInstance();
+                        auto &mirrorLayer = cachedLayerStackMirrorSurfaces.at(displayInfo.currentLayerStack);
+                        auto transformParams = detail::CalcMirrorLayerTransform(
+                            builtinDisplayWidth,
+                            builtinDisplayHeight,
+                            displayInfo.currentLayerStackRect.right,
+                            displayInfo.currentLayerStackRect.bottom);
+
+                        composerInstance.ZoomSurface(mirrorLayer, transformParams.widthScale, transformParams.heightScale);
+
+                        if (!transformParams.isAspectRatioSimilar)
+                            composerInstance.MoveSurface(mirrorLayer, transformParams.offsetX, transformParams.offsetY);
 
                         cachedLayerStackScales.emplace(displayInfo.currentLayerStack);
-                        LogInfo("[=] Update mirror layer scale: %p %f %f", mirrorLayer.data, scaleX, scaleY);
+                        LogInfo("[+] Transform mirror layer:%p similar:%d width:%f height:%f x:%f y:%f",
+                                mirrorLayer.data,
+                                transformParams.isAspectRatioSimilar,
+                                transformParams.widthScale,
+                                transformParams.heightScale,
+                                transformParams.offsetX,
+                                transformParams.offsetY);
                     }
                 }
             }
