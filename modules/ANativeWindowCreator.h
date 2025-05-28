@@ -1441,7 +1441,7 @@ namespace android
                 dumpDisplayResult += buffer;
             pclose(pipe);
 
-            static std::unordered_map<uint32_t, detail::compat::SurfaceControl> cachedLayerStackMirrorSurfaces;
+            static std::unordered_map<uint32_t, std::vector<detail::compat::SurfaceControl>> cachedLayerStackMirrorSurfaces;
             static std::unordered_set<uint32_t> cachedLayerStackScales;
 
             auto dumpDisplayInfos = detail::ParseDumpDisplayInfo(dumpDisplayResult);
@@ -1468,7 +1468,7 @@ namespace android
                         auto mirrorLayer = GetComposerInstance().MirrorSurface(surfaceControl, displayInfo.currentLayerStack);
 
                         LogInfo("[+] Mirror layer created: %p", mirrorLayer.data);
-                        cachedLayerStackMirrorSurfaces.emplace(displayInfo.currentLayerStack, std::move(mirrorLayer));
+                        cachedLayerStackMirrorSurfaces[displayInfo.currentLayerStack].emplace_back(std::move(mirrorLayer));
                     }
                 }
 
@@ -1484,26 +1484,29 @@ namespace android
                                 displayInfo.currentLayerStackRect.bottom);
 
                         auto &composerInstance = GetComposerInstance();
-                        auto &mirrorLayer = cachedLayerStackMirrorSurfaces.at(displayInfo.currentLayerStack);
+                        auto &mirrorLayers = cachedLayerStackMirrorSurfaces.at(displayInfo.currentLayerStack);
                         auto transformParams = detail::CalcMirrorLayerTransform(
                             builtinDisplayWidth,
                             builtinDisplayHeight,
                             displayInfo.currentLayerStackRect.right,
                             displayInfo.currentLayerStackRect.bottom);
 
-                        composerInstance.ZoomSurface(mirrorLayer, transformParams.widthScale, transformParams.heightScale);
+                        for (auto &mirrorLayer : mirrorLayers)
+                        {
+                            composerInstance.ZoomSurface(mirrorLayer, transformParams.widthScale, transformParams.heightScale);
 
-                        if (!transformParams.isAspectRatioSimilar)
-                            composerInstance.MoveSurface(mirrorLayer, transformParams.offsetX, transformParams.offsetY);
+                            if (!transformParams.isAspectRatioSimilar)
+                                composerInstance.MoveSurface(mirrorLayer, transformParams.offsetX, transformParams.offsetY);
 
-                        cachedLayerStackScales.emplace(displayInfo.currentLayerStack);
-                        LogInfo("[+] Transform mirror layer:%p similar:%d width:%f height:%f x:%f y:%f",
-                                mirrorLayer.data,
-                                transformParams.isAspectRatioSimilar,
-                                transformParams.widthScale,
-                                transformParams.heightScale,
-                                transformParams.offsetX,
-                                transformParams.offsetY);
+                            cachedLayerStackScales.emplace(displayInfo.currentLayerStack);
+                            LogInfo("[+] Transform mirror layer:%p similar:%d width:%f height:%f x:%f y:%f",
+                                    mirrorLayer.data,
+                                    transformParams.isAspectRatioSimilar,
+                                    transformParams.widthScale,
+                                    transformParams.heightScale,
+                                    transformParams.offsetX,
+                                    transformParams.offsetY);
+                        }
                     }
                 }
             }
