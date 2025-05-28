@@ -676,7 +676,7 @@ namespace android
         if (RenderType::RenderClient != m_options.renderType)
         {
             // Create native window
-            m_nativeWindow = ANativeWindowCreator::Create("AImGui");
+            m_nativeWindow = ANativeWindowCreator::Create({.name = "AImGui", .skipScreenshot = false});
             if (nullptr == m_nativeWindow)
             {
                 LogDebug("[-] ANativeWindow create failed");

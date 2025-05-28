@@ -833,7 +833,7 @@ namespace android::detail::compat
             ApiInvoker<"RefBase::IncStrong">()(data, this);
         }
 
-        SurfaceControl CreateSurface(const char *name, int32_t width, int32_t height, types::WindowFlags windowFlags = {})
+        SurfaceControl CreateSurface(const char *name, int32_t width, int32_t height, types::WindowFlags windowFlags = {}, bool skipScreenshot = false)
         {
             static void *parentHandle = nullptr;
 
@@ -855,28 +855,44 @@ namespace android::detail::compat
             case 8:
             case 9:
             {
-                uint32_t windowType = 0;
+                uint32_t windowType = skipScreenshot ? types::WINDOW_TYPE_DONT_SCREENSHOT : 0;
 
                 result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v9">()(data, windowName, width, height, pixelFormat, windowFlags, parentHandle, windowType, 0);
                 break;
             }
             case 10:
             {
+                if (skipScreenshot)
+                    layerMetadata.SetInt32(types::MetadataType::WINDOW_TYPE, types::WINDOW_TYPE_DONT_SCREENSHOT);
+
                 result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v10">()(data, windowName, width, height, pixelFormat, windowFlags, parentHandle, layerMetadata);
                 break;
             }
             case 11:
             {
+                if (skipScreenshot)
+                    layerMetadata.SetInt32(types::MetadataType::WINDOW_TYPE, types::WINDOW_TYPE_DONT_SCREENSHOT);
+
                 result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v11">()(data, windowName, width, height, pixelFormat, windowFlags, parentHandle, layerMetadata, nullptr);
                 break;
             }
             case 12:
             case 13:
             {
+                using types::operator|=;
+
+                if (skipScreenshot)
+                    windowFlags |= types::WindowFlags::eSkipScreenshot;
+
                 result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v13">()(data, windowName, width, height, pixelFormat, windowFlags, &parentHandle, layerMetadata, nullptr);
             }
             default:
             {
+                using types::operator|=;
+
+                if (skipScreenshot)
+                    windowFlags |= types::WindowFlags::eSkipScreenshot;
+
                 result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v14">()(data, windowName, width, height, pixelFormat, windowFlags, &parentHandle, layerMetadata, nullptr);
                 break;
             }
@@ -897,7 +913,7 @@ namespace android::detail::compat
                 CloseGlobalTransaction(false);
             }
 
-            return {result.get()};
+            return {result.get(), width, height, skipScreenshot};
         }
 
         SurfaceControl MirrorSurface(SurfaceControl &surface, uint32_t layerStack)
@@ -1328,6 +1344,14 @@ namespace android
             int32_t height;
         };
 
+        struct CreateOptions
+        {
+            const char *name;
+            int32_t width;
+            int32_t height;
+            bool skipScreenshot;
+        };
+
     public:
         static void SetupCustomApiResolver(const detail::ApiResolver::ResolverImpl &resolver)
         {
@@ -1359,11 +1383,13 @@ namespace android
             };
         }
 
-        static ANativeWindow *Create(const char *name, int32_t width = -1, int32_t height = -1)
+        static ANativeWindow *Create(const CreateOptions &options = {.name = "AImGui"})
         {
             auto &surfaceComposerClient = GetComposerInstance();
 
-            while (-1 == width || -1 == height)
+            int32_t width = options.width;
+            int32_t height = options.height;
+            while (0 == width || 0 == height)
             {
                 detail::types::ui::DisplayState displayInfo{};
 
@@ -1376,7 +1402,7 @@ namespace android
                 break;
             }
 
-            auto surfaceControl = surfaceComposerClient.CreateSurface(name, width, height);
+            auto surfaceControl = surfaceComposerClient.CreateSurface(options.name, width, height, {}, options.skipScreenshot);
             auto nativeWindow = reinterpret_cast<ANativeWindow *>(surfaceControl.GetSurface());
 
             m_cachedSurfaceControl.emplace(nativeWindow, std::move(surfaceControl));
