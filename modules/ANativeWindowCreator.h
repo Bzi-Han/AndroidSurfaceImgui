@@ -936,6 +936,16 @@ namespace android::detail::compat
 
             if (14 > compat::SystemVersion)
                 return {};
+            if (surface.skipScreenshot)
+            {
+                LogInfo("[=] Surface not need mirror: skipScreenshot is true");
+                return {};
+            }
+            if (0 == surface.width || 0 == surface.height)
+            {
+                LogInfo("[=] Surface not need mirror: width or height is 0");
+                return {};
+            }
 
             auto mirrorSurface = ApiInvoker<"SurfaceComposerClient::MirrorSurface@v14">()(data, surface.data);
             if (nullptr == mirrorSurface.get())
@@ -944,21 +954,8 @@ namespace android::detail::compat
                 return {};
             }
 
-            int32_t width = -1, height = -1;
-            while (-1 == width || -1 == height)
-            {
-                detail::types::ui::DisplayState displayInfo{};
-
-                if (!GetDisplayInfo(&displayInfo))
-                    break;
-
-                width = displayInfo.layerStackSpaceRect.width;
-                height = displayInfo.layerStackSpaceRect.height;
-
-                break;
-            }
             auto mirrorRootName = "MirrorRoot@" + std::to_string(layerStack);
-            auto mirrorRootSurface = CreateSurface(mirrorRootName.data(), width, height, types::WindowFlags::eNoColorFill);
+            auto mirrorRootSurface = CreateSurface(mirrorRootName.data(), surface.width, surface.height, types::WindowFlags::eNoColorFill);
             if (!mirrorRootSurface)
             {
                 LogError("[-] Failed to create mirror root surface: %u", layerStack);
@@ -1427,6 +1424,18 @@ namespace android
             if (std::chrono::steady_clock::now() - lastTime < std::chrono::seconds(1))
                 return;
 
+            // Check if have surfaces need to mirror
+            static std::vector<detail::compat::SurfaceControl *> surfacesNeedToMirror;
+
+            surfacesNeedToMirror.clear();
+            for (auto &[_, surfaceControl] : m_cachedSurfaceControl)
+            {
+                if (!surfaceControl.skipScreenshot)
+                    surfacesNeedToMirror.push_back(&surfaceControl);
+            }
+            if (surfacesNeedToMirror.empty())
+                return;
+
             // Run "dumpsys display" and get result
             auto pipe = popen("dumpsys display", "r");
             if (!pipe)
@@ -1463,9 +1472,9 @@ namespace android
                 {
                     LogInfo("[=] New display layerstack detected: [%s] -> %u", displayInfo.uniqueId.data(), displayInfo.currentLayerStack);
 
-                    for (auto &[_, surfaceControl] : m_cachedSurfaceControl)
+                    for (auto surfaceControl : surfacesNeedToMirror)
                     {
-                        auto mirrorLayer = GetComposerInstance().MirrorSurface(surfaceControl, displayInfo.currentLayerStack);
+                        auto mirrorLayer = GetComposerInstance().MirrorSurface(*surfaceControl, displayInfo.currentLayerStack);
 
                         LogInfo("[+] Mirror layer created: %p", mirrorLayer.data);
                         cachedLayerStackMirrorSurfaces[displayInfo.currentLayerStack].emplace_back(std::move(mirrorLayer));
