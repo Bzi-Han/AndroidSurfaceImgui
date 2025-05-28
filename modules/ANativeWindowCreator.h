@@ -328,6 +328,7 @@ namespace android::detail::types::apis::libgui
     namespace generic
     {
         using LayerMetadata__Constructor = void (*)(void *thiz);
+        using LayerMetadata__SetInt32 = void (*)(void *thiz, MetadataType key, int32_t value);
 
         using SurfaceComposerClient__Constructor = void *(*)(void *thiz);
         using SurfaceComposerClient__MirrorSurface = StrongPointer<void> (*)(void *thiz, void *mirrorFromSurface);
@@ -404,6 +405,7 @@ namespace android::detail::apis
             struct ApiTable
             {
                 void *Constructor;
+                void *SetInt32;
             };
 
             inline static ApiTable Api;
@@ -555,6 +557,8 @@ namespace android::detail::compat
         // libgui
         if constexpr ("LayerMetadata::Constructor" == descriptor)
             return reinterpret_cast<types::apis::libgui::generic::LayerMetadata__Constructor>(apis::libgui::LayerMetadata::Api.Constructor);
+        if constexpr ("LayerMetadata::SetInt32" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::LayerMetadata__SetInt32>(apis::libgui::LayerMetadata::Api.SetInt32);
 
         if constexpr ("SurfaceControl::GetSurface" == descriptor)
             return reinterpret_cast<types::apis::libgui::generic::SurfaceControl__GetSurface>(apis::libgui::SurfaceControl::Api.GetSurface);
@@ -665,6 +669,12 @@ namespace android::detail::compat
         {
             if (9 < SystemVersion)
                 ApiInvoker<"LayerMetadata::Constructor@v10">()(data);
+        }
+
+        void SetInt32(types::MetadataType key, int32_t value)
+        {
+            if (9 < SystemVersion)
+                ApiInvoker<"LayerMetadata::SetInt32@v10">()(data, key, value);
         }
 
         operator void *()
@@ -1047,6 +1057,9 @@ namespace android::detail
                     // LayerMetadata
                     ApiDescriptor{10, 13, &apis::libgui::LayerMetadata::Api.Constructor, "_ZN7android13LayerMetadataC2Ev"},
                     ApiDescriptor{14, UINT_MAX, &apis::libgui::LayerMetadata::Api.Constructor, "_ZN7android3gui13LayerMetadataC2Ev"},
+
+                    ApiDescriptor{10, 13, &apis::libgui::LayerMetadata::Api.SetInt32, "_ZN7android13LayerMetadata8setInt32Eji"},
+                    ApiDescriptor{14, UINT_MAX, &apis::libgui::LayerMetadata::Api.SetInt32, "_ZN7android3gui13LayerMetadata8setInt32Eji"},
 
                     // SurfaceComposerClient
                     ApiDescriptor{5, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.Constructor, "_ZN7android21SurfaceComposerClientC2Ev"},
