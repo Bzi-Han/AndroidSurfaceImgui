@@ -80,7 +80,7 @@ namespace android::detail::types
         R_8 = 0x38,
     };
 
-    enum class WindowFlags
+    enum class WindowFlags : uint32_t
     { // (keep in sync with SurfaceControl.java)
         eHidden = 0x00000004,
         eDestroyBackbuffer = 0x00000020,
@@ -100,7 +100,7 @@ namespace android::detail::types
         eFXSurfaceMask = 0x000F0000,
     };
 
-    enum class MetadataType
+    enum class MetadataType : uint32_t
     {
         OWNER_UID = 1,
         WINDOW_TYPE = 2,
@@ -110,6 +110,11 @@ namespace android::detail::types
         OWNER_PID = 6,
         DEQUEUE_TIME = 7,
         GAME_MODE = 8
+    };
+
+    enum
+    {
+        WINDOW_TYPE_DONT_SCREENSHOT = 441731
     };
 
     template <typename any_t>
@@ -133,6 +138,22 @@ namespace android::detail::types
             return nullptr != pointer;
         }
     };
+
+    template <typename enum_t>
+    constexpr enum_t operator|(enum_t lhs, enum_t rhs)
+        requires std::is_enum_v<enum_t>
+    {
+        using underlying_t = std::underlying_type_t<enum_t>;
+
+        return static_cast<enum_t>(static_cast<underlying_t>(lhs) | static_cast<underlying_t>(rhs));
+    }
+
+    template <typename enum_t>
+    constexpr enum_t operator|=(enum_t &lhs, enum_t rhs)
+        requires std::is_enum_v<enum_t>
+    {
+        return (lhs = lhs | rhs);
+    }
 } // namespace android::detail::types
 
 namespace android::detail::types::ui
