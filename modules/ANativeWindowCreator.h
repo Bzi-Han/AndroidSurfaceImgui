@@ -662,13 +662,21 @@ namespace android::detail::compat
     struct SurfaceControl
     {
         void *data;
+        int32_t width, height;
+        bool skipScreenshot;
 
-        SurfaceControl()
-            : data(nullptr)
+        SurfaceControl(void *data = nullptr)
+            : data(data),
+              width(0),
+              height(0),
+              skipScreenshot(false)
         {
         }
-        SurfaceControl(void *data)
-            : data(data)
+        SurfaceControl(void *data, int32_t width, int32_t height, bool skipScreenshot)
+            : data(data),
+              width(width),
+              height(height),
+              skipScreenshot(skipScreenshot)
         {
         }
 
