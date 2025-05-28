@@ -815,7 +815,8 @@ namespace android::detail::compat
 
         SurfaceComposerClientTransaction()
         {
-            ApiInvoker<"SurfaceComposerClient::Transaction::Constructor">()(data);
+            if (11 < SystemVersion)
+                ApiInvoker<"SurfaceComposerClient::Transaction::Constructor">()(data);
         }
 
         void *SetLayer(types::StrongPointer<void> &surfaceControl, int32_t z)
@@ -1091,6 +1092,13 @@ namespace android::detail::compat
         void CloseGlobalTransaction(bool synchronous)
         {
             ApiInvoker<"SurfaceComposerClient::CloseGlobalTransaction@v7">()(synchronous);
+        }
+
+        SurfaceComposerClientTransaction &GetDefaultTransaction()
+        {
+            static SurfaceComposerClientTransaction transaction;
+
+            return transaction;
         }
     };
 } // namespace android::detail::compat
