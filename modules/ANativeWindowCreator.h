@@ -276,6 +276,11 @@ namespace android::detail::types::apis::libgui
         using SurfaceComposerClient__CreateSurface = StrongPointer<void> (*)(void *thiz, void *name, uint32_t w, uint32_t h, PixelFormat format, WindowFlags flags, void *parent, uint32_t windowType, uint32_t ownerUid);
     } // namespace v8_v9
 
+    namespace v8_v12
+    {
+        using SurfaceComposerClient__Transaction__Apply = int32_t (*)(void *thiz, bool synchronous);
+    } // namespace v8_v12
+
     namespace v10
     {
         // SurfaceComposerClient::createSurface(const String8& name, uint32_t w, uint32_t h,
@@ -284,6 +289,14 @@ namespace android::detail::types::apis::libgui
         //         LayerMetadata metadata)
         using SurfaceComposerClient__CreateSurface = StrongPointer<void> (*)(void *thiz, void *name, uint32_t w, uint32_t h, PixelFormat format, WindowFlags flags, void *parent, void *metadata);
     } // namespace v10
+
+    namespace v10_v12
+    {
+        // SurfaceComposerClient::Transaction& SurfaceComposerClient::Transaction::setInputWindowInfo(
+        //         const sp<SurfaceControl>& sc,
+        //         const InputWindowInfo& info)
+        using SurfaceComposerClient__Transaction__SetInputWindowInfo = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, void *inputWindowInfo);
+    } // namespace v10_v12
 
     namespace v11
     {
@@ -305,6 +318,18 @@ namespace android::detail::types::apis::libgui
         using SurfaceComposerClient__CreateSurface = StrongPointer<void> (*)(void *thiz, void *name, uint32_t w, uint32_t h, PixelFormat format, WindowFlags flags, void **parentHandle, void *metadata, uint32_t *outTransformHint);
     } // namespace v12_v13
 
+    namespace v13_v15
+    {
+        // SurfaceComposerClient::Transaction& SurfaceComposerClient::Transaction::setInputWindowInfo(
+        //         const sp<SurfaceControl>& sc, const WindowInfo& info)
+        using SurfaceComposerClient__Transaction__SetInputWindowInfo = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, void *windowInfo);
+    } // namespace v13_v15
+
+    namespace v13_infinite
+    {
+        using SurfaceComposerClient__Transaction__Apply = int32_t (*)(void *thiz, bool synchronous, bool oneWay);
+    } // namespace v13_infinite
+
     namespace v14_infinite
     {
         // SurfaceComposerClient::createSurface(const String8& name, uint32_t w, uint32_t h,
@@ -315,15 +340,12 @@ namespace android::detail::types::apis::libgui
         using SurfaceComposerClient__CreateSurface = StrongPointer<void> (*)(void *thiz, void *name, uint32_t w, uint32_t h, PixelFormat format, WindowFlags flags, void **parentHandle, void *metadata, uint32_t *outTransformHint);
     } // namespace v14_infinite
 
-    namespace v8_v12
+    namespace v16_infinite
     {
-        using SurfaceComposerClient__Transaction__Apply = int32_t (*)(void *thiz, bool synchronous);
-    } // namespace v8_v12
-
-    namespace v13_infinite
-    {
-        using SurfaceComposerClient__Transaction__Apply = int32_t (*)(void *thiz, bool synchronous, bool oneWay);
-    } // namespace v13_infinite
+        // SurfaceComposerClient::Transaction& SurfaceComposerClient::Transaction::setInputWindowInfo(
+        //         const sp<SurfaceControl>& sc, sp<WindowInfoHandle> info)
+        using SurfaceComposerClient__Transaction__SetInputWindowInfo = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, void *windowInfoHandle);
+    } // namespace v16_infinite
 
     namespace generic
     {
@@ -352,6 +374,7 @@ namespace android::detail::types::apis::libgui
 
         using SurfaceControl__GetSurface = StrongPointer<void> (*)(void *thiz);
         using SurfaceControl__DisConnect = void (*)(void *thiz);
+        using SurfaceControl__GetParentingLayer = StrongPointer<void> (*)(void *thiz);
     } // namespace generic
 } // namespace android::detail::types::apis::libgui
 
@@ -447,6 +470,7 @@ namespace android::detail::apis
                 void *Reparent;
                 void *SetMatrix;
                 void *SetPosition;
+                void *SetInputWindowInfo;
                 void *Apply;
             };
 
@@ -459,6 +483,7 @@ namespace android::detail::apis
             {
                 void *GetSurface;
                 void *DisConnect;
+                void *GetParentingLayer;
 
                 void *SetLayer;
             };
@@ -564,6 +589,8 @@ namespace android::detail::compat
             return reinterpret_cast<types::apis::libgui::generic::SurfaceControl__GetSurface>(apis::libgui::SurfaceControl::Api.GetSurface);
         if constexpr ("SurfaceControl::DisConnect" == descriptor)
             return reinterpret_cast<types::apis::libgui::generic::SurfaceControl__DisConnect>(apis::libgui::SurfaceControl::Api.DisConnect);
+        if constexpr ("SurfaceControl::GetParentingLayer" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceControl__GetParentingLayer>(apis::libgui::SurfaceControl::Api.GetParentingLayer);
         if constexpr ("SurfaceControl::SetLayer" == descriptor)
             return reinterpret_cast<types::apis::libgui::v5_v7::SurfaceControl__SetLayer>(apis::libgui::SurfaceControl::Api.SetLayer);
 
@@ -588,6 +615,15 @@ namespace android::detail::compat
             return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetMatrix>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetMatrix);
         if constexpr ("SurfaceComposerClient::Transaction::SetPosition" == descriptor)
             return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetPosition>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetPosition);
+        if constexpr ("SurfaceComposerClient::Transaction::SetInputWindowInfo" == descriptor)
+        {
+            if constexpr (10 <= descriptor.version && 12 >= descriptor.version)
+                return reinterpret_cast<types::apis::libgui::v10_v12::SurfaceComposerClient__Transaction__SetInputWindowInfo>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetInputWindowInfo);
+            else if constexpr (13 <= descriptor.version && 15 >= descriptor.version)
+                return reinterpret_cast<types::apis::libgui::v13_v15::SurfaceComposerClient__Transaction__SetInputWindowInfo>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetInputWindowInfo);
+            else if constexpr (16 <= descriptor.version)
+                return reinterpret_cast<types::apis::libgui::v16_infinite::SurfaceComposerClient__Transaction__SetInputWindowInfo>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetInputWindowInfo);
+        }
         if constexpr ("SurfaceComposerClient::Transaction::Apply" == descriptor)
         {
             if constexpr (8 <= descriptor.version && 12 >= descriptor.version)
@@ -735,6 +771,14 @@ namespace android::detail::compat
             return reinterpret_cast<Surface *>(reinterpret_cast<size_t>(result.pointer) + sizeof(std::max_align_t) / 2);
         }
 
+        types::StrongPointer<void> GetParentingLayer()
+        {
+            if (nullptr == data)
+                return {};
+
+            return ApiInvoker<"SurfaceControl::GetParentingLayer">()(data);
+        }
+
         void DisConnect()
         {
             if (nullptr == data)
@@ -812,6 +856,11 @@ namespace android::detail::compat
         void SetPosition(types::StrongPointer<void> &surfaceControl, float x, float y)
         {
             ApiInvoker<"SurfaceComposerClient::Transaction::SetPosition">()(data, surfaceControl, x, y);
+        }
+
+        void SetInputWindowInfo(types::StrongPointer<void> &surfaceControl, void *windowInfo)
+        {
+            ApiInvoker<"SurfaceComposerClient::Transaction::SetInputWindowInfo@v10">()(data, surfaceControl, windowInfo);
         }
 
         int32_t Apply(bool synchronous, bool oneWay)
@@ -1111,6 +1160,10 @@ namespace android::detail
                     ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetMatrix, "_ZN7android21SurfaceComposerClient11Transaction9setMatrixERKNS_2spINS_14SurfaceControlEEEffff"},
                     ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetPosition, "_ZN7android21SurfaceComposerClient11Transaction11setPositionERKNS_2spINS_14SurfaceControlEEEff"},
 
+                    ApiDescriptor{10, 12, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetInputWindowInfo, "_ZN7android21SurfaceComposerClient11Transaction18setInputWindowInfoERKNS_2spINS_14SurfaceControlEEERKNS_15InputWindowInfoE"},
+                    ApiDescriptor{13, 15, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetInputWindowInfo, "_ZN7android21SurfaceComposerClient11Transaction18setInputWindowInfoERKNS_2spINS_14SurfaceControlEEERKNS_3gui10WindowInfoE"},
+                    ApiDescriptor{16, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetInputWindowInfo, "_ZN7android21SurfaceComposerClient11Transaction18setInputWindowInfoERKNS_2spINS_14SurfaceControlEEENS2_INS_3gui16WindowInfoHandleEEE"},
+
                     // SurfaceComposerClient::GlobalTransaction
                     ApiDescriptor{5, 8, &apis::libgui::SurfaceComposerClient::Api.OpenGlobalTransaction, "_ZN7android21SurfaceComposerClient21openGlobalTransactionEv"},
                     ApiDescriptor{5, 8, &apis::libgui::SurfaceComposerClient::Api.CloseGlobalTransaction, "_ZN7android21SurfaceComposerClient22closeGlobalTransactionEb"},
@@ -1121,6 +1174,8 @@ namespace android::detail
 
                     ApiDescriptor{5, 7, &apis::libgui::Surface::Api.DisConnect, "_ZN7android7Surface10disconnectEi"},
                     ApiDescriptor{7, UINT_MAX, &apis::libgui::SurfaceControl::Api.DisConnect, "_ZN7android14SurfaceControl10disconnectEv"},
+
+                    ApiDescriptor{12, UINT_MAX, &apis::libgui::SurfaceControl::Api.GetParentingLayer, "_ZN7android14SurfaceControl17getParentingLayerEv"},
 
                     ApiDescriptor{5, 5, &apis::libgui::SurfaceControl::Api.SetLayer, "_ZN7android14SurfaceControl8setLayerEi"},
                     ApiDescriptor{6, 7, &apis::libgui::SurfaceControl::Api.SetLayer, "_ZN7android14SurfaceControl8setLayerEj"},
