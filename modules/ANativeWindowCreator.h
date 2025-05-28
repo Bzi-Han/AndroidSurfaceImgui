@@ -1586,6 +1586,19 @@ namespace android
             lastTime = std::chrono::steady_clock::now();
         }
 
+        static void UpdateWindowInfo(ANativeWindow *nativeWindow, void *windowInfo)
+        {
+            if (!m_cachedSurfaceControl.contains(nativeWindow))
+                return;
+
+            auto &transaction = GetComposerInstance().GetDefaultTransaction();
+            auto &surfaceControl = m_cachedSurfaceControl.at(nativeWindow);
+            auto parentingLayer = surfaceControl.GetParentingLayer();
+
+            transaction.SetInputWindowInfo(parentingLayer, windowInfo);
+            transaction.Apply(true, false);
+        }
+
     private:
         inline static std::unordered_map<ANativeWindow *, detail::compat::SurfaceControl> m_cachedSurfaceControl;
     };
