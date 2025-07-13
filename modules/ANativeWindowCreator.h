@@ -55,7 +55,7 @@
 #define LogInfo_DEFINED 1
 #endif // !LogInfo
 
-namespace android::detail::types
+namespace android::anative_window_creator::detail::types
 {
     /**
      * The following types and structures are adapted from AOSP.
@@ -154,9 +154,9 @@ namespace android::detail::types
     {
         return (lhs = lhs | rhs);
     }
-} // namespace android::detail::types
+} // namespace android::anative_window_creator::detail::types
 
-namespace android::detail::types::ui
+namespace android::anative_window_creator::detail::types::ui
 {
     /**
      * The following types and structures are adapted from AOSP android::ui.
@@ -221,9 +221,9 @@ namespace android::detail::types::ui
     {
         uint64_t value;
     };
-} // namespace android::detail::types::ui
+} // namespace android::anative_window_creator::detail::types::ui
 
-namespace android::detail::types::apis::libutils
+namespace android::anative_window_creator::detail::types::apis::libutils
 {
     namespace generic
     {
@@ -233,9 +233,9 @@ namespace android::detail::types::apis::libutils
         using String8__Constructor = void *(*)(void *thiz, const char *const string);
         using String8__Destructor = void (*)(void *thiz);
     } // namespace generic
-} // namespace android::detail::types::apis::libutils
+} // namespace android::anative_window_creator::detail::types::apis::libutils
 
-namespace android::detail::types::apis::libgui
+namespace android::anative_window_creator::detail::types::apis::libgui
 {
     namespace v5_v7
     {
@@ -376,9 +376,9 @@ namespace android::detail::types::apis::libgui
         using SurfaceControl__DisConnect = void (*)(void *thiz);
         using SurfaceControl__GetParentingLayer = StrongPointer<void> (*)(void *thiz);
     } // namespace generic
-} // namespace android::detail::types::apis::libgui
+} // namespace android::anative_window_creator::detail::types::apis::libgui
 
-namespace android::detail::types::apis
+namespace android::anative_window_creator::detail::types::apis
 {
     struct ApiDescriptor
     {
@@ -392,9 +392,9 @@ namespace android::detail::types::apis
             return currentVersion >= minVersion && currentVersion <= maxVersion;
         }
     };
-} // namespace android::detail::types::apis
+} // namespace android::anative_window_creator::detail::types::apis
 
-namespace android::detail::apis
+namespace android::anative_window_creator::detail::apis
 {
     namespace libutils
     {
@@ -501,9 +501,9 @@ namespace android::detail::apis
             inline static ApiTable Api;
         };
     } // namespace libgui
-} // namespace android::detail::apis
+} // namespace android::anative_window_creator::detail::apis
 
-namespace android::detail::compat
+namespace android::anative_window_creator::detail::compat
 {
     constexpr size_t SupportedMinVersion = 5;
 
@@ -671,9 +671,9 @@ namespace android::detail::compat
             return reinterpret_cast<types::apis::libgui::v5_v7::SurfaceComposerClient__CloseGlobalTransaction__Static>(apis::libgui::SurfaceComposerClient::Api.CloseGlobalTransaction);
     }
 
-} // namespace android::detail::compat
+} // namespace android::anative_window_creator::detail::compat
 
-namespace android::detail::compat
+namespace android::anative_window_creator::detail::compat
 {
     static size_t SystemVersion = 13;
 
@@ -1101,15 +1101,15 @@ namespace android::detail::compat
             return transaction;
         }
     };
-} // namespace android::detail::compat
+} // namespace android::anative_window_creator::detail::compat
 
-namespace android::detail
+namespace android::anative_window_creator::detail
 {
     struct ApiTableDescriptor
     {
         static const auto GetDefaultDescriptors()
         {
-            using namespace android::detail::types::apis;
+            using namespace android::anative_window_creator::detail::types::apis;
 
             return std::make_pair(
                 // libutils
@@ -1390,7 +1390,7 @@ namespace android::detail
 
         return result;
     }
-} // namespace android::detail
+} // namespace android::anative_window_creator::detail
 
 namespace android
 {
@@ -1413,17 +1413,17 @@ namespace android
         };
 
     public:
-        static void SetupCustomApiResolver(const detail::ApiResolver::ResolverImpl &resolver)
+        static void SetupCustomApiResolver(const anative_window_creator::detail::ApiResolver::ResolverImpl &resolver)
         {
-            detail::ApiResolver::Resolve(resolver);
+            anative_window_creator::detail::ApiResolver::Resolve(resolver);
         }
 
     public:
-        static detail::compat::SurfaceComposerClient &GetComposerInstance()
+        static anative_window_creator::detail::compat::SurfaceComposerClient &GetComposerInstance()
         {
-            detail::ApiResolver::Resolve();
+            anative_window_creator::detail::ApiResolver::Resolve();
 
-            static detail::compat::SurfaceComposerClient surfaceComposerClient;
+            static anative_window_creator::detail::compat::SurfaceComposerClient surfaceComposerClient;
 
             return surfaceComposerClient;
         }
@@ -1431,7 +1431,7 @@ namespace android
         static DisplayInfo GetDisplayInfo()
         {
             auto &surfaceComposerClient = GetComposerInstance();
-            detail::types::ui::DisplayState displayInfo{};
+            anative_window_creator::detail::types::ui::DisplayState displayInfo{};
 
             if (!surfaceComposerClient.GetDisplayInfo(&displayInfo))
                 return {};
@@ -1451,7 +1451,7 @@ namespace android
             int32_t height = options.height;
             while (0 == width || 0 == height)
             {
-                detail::types::ui::DisplayState displayInfo{};
+                anative_window_creator::detail::types::ui::DisplayState displayInfo{};
 
                 if (!surfaceComposerClient.GetDisplayInfo(&displayInfo))
                     break;
@@ -1474,7 +1474,7 @@ namespace android
             if (!m_cachedSurfaceControl.contains(nativeWindow))
                 return;
 
-            m_cachedSurfaceControl[nativeWindow].DestroySurface(reinterpret_cast<detail::compat::Surface *>(nativeWindow));
+            m_cachedSurfaceControl[nativeWindow].DestroySurface(reinterpret_cast<anative_window_creator::detail::compat::Surface *>(nativeWindow));
             m_cachedSurfaceControl.erase(nativeWindow);
         }
 
@@ -1482,13 +1482,13 @@ namespace android
         {
             static std::chrono::steady_clock::time_point lastTime{};
 
-            if (14 > detail::compat::SystemVersion)
+            if (14 > anative_window_creator::detail::compat::SystemVersion)
                 return;
             if (std::chrono::steady_clock::now() - lastTime < std::chrono::seconds(1))
                 return;
 
             // Check if have surfaces need to mirror
-            static std::vector<detail::compat::SurfaceControl *> surfacesNeedToMirror;
+            static std::vector<anative_window_creator::detail::compat::SurfaceControl *> surfacesNeedToMirror;
 
             surfacesNeedToMirror.clear();
             for (auto &[_, surfaceControl] : m_cachedSurfaceControl)
@@ -1513,10 +1513,10 @@ namespace android
                 dumpDisplayResult += buffer;
             pclose(pipe);
 
-            static std::unordered_map<uint32_t, std::vector<detail::compat::SurfaceControl>> cachedLayerStackMirrorSurfaces;
+            static std::unordered_map<uint32_t, std::vector<anative_window_creator::detail::compat::SurfaceControl>> cachedLayerStackMirrorSurfaces;
             static std::unordered_set<uint32_t> cachedLayerStackScales;
 
-            auto dumpDisplayInfos = detail::ParseDumpDisplayInfo(dumpDisplayResult);
+            auto dumpDisplayInfos = anative_window_creator::detail::ParseDumpDisplayInfo(dumpDisplayResult);
             for (auto &displayInfo : dumpDisplayInfos)
             {
                 // Update multi display layer scale
@@ -1557,7 +1557,7 @@ namespace android
 
                         auto &composerInstance = GetComposerInstance();
                         auto &mirrorLayers = cachedLayerStackMirrorSurfaces.at(displayInfo.currentLayerStack);
-                        auto transformParams = detail::CalcMirrorLayerTransform(
+                        auto transformParams = anative_window_creator::detail::CalcMirrorLayerTransform(
                             builtinDisplayWidth,
                             builtinDisplayHeight,
                             displayInfo.currentLayerStackRect.right,
@@ -1600,7 +1600,7 @@ namespace android
         }
 
     private:
-        inline static std::unordered_map<ANativeWindow *, detail::compat::SurfaceControl> m_cachedSurfaceControl;
+        inline static std::unordered_map<ANativeWindow *, anative_window_creator::detail::compat::SurfaceControl> m_cachedSurfaceControl;
     };
 } // namespace android
 
