@@ -1080,10 +1080,10 @@ namespace android::ainput_event_dispatcher::detail
         static const bool PatchDefaultOffsetTable()
         {
 #if defined(__aarch64__)
-            auto instruction = *reinterpret_cast<uint32_t *>(WindowInfoAddTouchableRegion);
+            auto instruction = *reinterpret_cast<uint32_t *>(apis::libgui::WindowInfo::Api.AddTouchableRegion);
             LogInfo("[=] Instruction: %08X", instruction);
 
-            if (0x7F800000 != (instruction & 0x7F800000))
+            if (0x11000000 != (instruction & 0x7F800000))
             {
                 LogError("[!] Instruction is not valid!");
                 return false;
