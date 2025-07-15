@@ -776,6 +776,15 @@ namespace android::anative_window_creator::detail::compat
             if (nullptr == data)
                 return {};
 
+            if (12 > SystemVersion)
+            {
+                types::StrongPointer<void> result;
+
+                result.pointer = data;
+
+                return result;
+            }
+
             return ApiInvoker<"SurfaceControl::GetParentingLayer">()(data);
         }
 
