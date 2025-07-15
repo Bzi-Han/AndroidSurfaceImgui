@@ -362,6 +362,7 @@ namespace android::anative_window_creator::detail::types::apis::libgui
         using SurfaceComposerClient__GetPhysicalDisplayIds__Static = std::vector<ui::PhysicalDisplayId> (*)();
         using SurfaceComposerClient__GetPhysicalDisplayToken__Static = StrongPointer<void> (*)(ui::PhysicalDisplayId displayId);
 
+        using SurfaceComposerClient__Transaction__CopyConstructor = void *(*)(void *thiz, void *other);
         using SurfaceComposerClient__Transaction__Constructor = void *(*)(void *thiz);
         using SurfaceComposerClient__Transaction__SetLayer = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, int32_t z);
         using SurfaceComposerClient__Transaction__SetTrustedOverlay = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, bool isTrustedOverlay);
@@ -461,6 +462,7 @@ namespace android::anative_window_creator::detail::apis
         {
             struct ApiTable
             {
+                void *CopyConstructor;
                 void *Constructor;
                 void *SetLayer;
                 void *SetTrustedOverlay;
@@ -598,7 +600,12 @@ namespace android::anative_window_creator::detail::compat
             return reinterpret_cast<types::apis::libgui::v5_v7::Surface__DisConnect>(apis::libgui::Surface::Api.DisConnect);
 
         if constexpr ("SurfaceComposerClient::Transaction::Constructor" == descriptor)
-            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__Constructor>(apis::libgui::SurfaceComposerClient::Transaction::Api.Constructor);
+        {
+            if constexpr (12 > descriptor.version)
+                return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__CopyConstructor>(apis::libgui::SurfaceComposerClient::Transaction::Api.CopyConstructor);
+            else
+                return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__Constructor>(apis::libgui::SurfaceComposerClient::Transaction::Api.Constructor);
+        }
         if constexpr ("SurfaceComposerClient::Transaction::SetLayer" == descriptor)
             return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetLayer>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetLayer);
         if constexpr ("SurfaceComposerClient::Transaction::SetLayerStack" == descriptor)
@@ -824,8 +831,10 @@ namespace android::anative_window_creator::detail::compat
 
         SurfaceComposerClientTransaction()
         {
-            if (11 < SystemVersion)
-                ApiInvoker<"SurfaceComposerClient::Transaction::Constructor">()(data);
+            if (12 > SystemVersion)
+                ApiInvoker<"SurfaceComposerClient::Transaction::Constructor@v11">()(data, data);
+            else
+                ApiInvoker<"SurfaceComposerClient::Transaction::Constructor@v12">()(data);
         }
 
         void *SetLayer(types::StrongPointer<void> &surfaceControl, int32_t z)
@@ -1162,6 +1171,7 @@ namespace android::anative_window_creator::detail
                     ApiDescriptor{11, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.GetDisplayState, "_ZN7android21SurfaceComposerClient15getDisplayStateERKNS_2spINS_7IBinderEEEPNS_2ui12DisplayStateE"},
 
                     // SurfaceComposerClient::Transaction
+                    ApiDescriptor{11, 11, &apis::libgui::SurfaceComposerClient::Transaction::Api.CopyConstructor, "_ZN7android21SurfaceComposerClient11TransactionC2ERKS1_"},
                     ApiDescriptor{12, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Constructor, "_ZN7android21SurfaceComposerClient11TransactionC2Ev"},
                     ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetLayer, "_ZN7android21SurfaceComposerClient11Transaction8setLayerERKNS_2spINS_14SurfaceControlEEEi"},
                     ApiDescriptor{12, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetTrustedOverlay, "_ZN7android21SurfaceComposerClient11Transaction17setTrustedOverlayERKNS_2spINS_14SurfaceControlEEEb"},
