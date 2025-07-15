@@ -40,10 +40,6 @@
 #include <vector>
 #include <variant>
 
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-
 #ifndef LOGTAG
 #define LOGTAG "AImGui"
 
@@ -59,63 +55,6 @@
 #endif // !LogInfo
 
 #define B_PACK_CHARS(c1, c2, c3, c4) ((((c1) << 24)) | (((c2) << 16)) | (((c3) << 8)) | (c4))
-
-inline std::string HexDump(void *data, size_t size)
-{
-
-    size_t block = size / 16;
-    for (size_t i = 0; i < block; ++i)
-    {
-        std::stringstream ss;
-        ss << std::hex << std::setw(8) << std::setfill('0') << i * 16;
-        ss << ": ";
-        for (size_t j = 0; j < 16; ++j)
-        {
-            ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<uint16_t>(reinterpret_cast<uint8_t *>(data)[i * 16 + j]) << " ";
-        }
-        ss << " ";
-        for (size_t j = 0; j < 16; ++j)
-        {
-            auto c = reinterpret_cast<uint8_t *>(data)[i * 16 + j];
-            if (c >= 0x20 && c <= 0x7E)
-            {
-                ss << static_cast<char>(c);
-            }
-            else
-            {
-                ss << ".";
-            }
-        }
-        ss << std::endl;
-        LogDebug("[=] %s", ss.str().c_str());
-    }
-    if (size % 16)
-    {
-        std::stringstream ss;
-        ss << std::hex << std::setw(8) << std::setfill('0') << block * 16;
-        ss << ": ";
-        for (size_t j = 0; j < size % 16; ++j)
-        {
-            ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<uint16_t>(reinterpret_cast<uint8_t *>(data)[block * 16 + j]) << " ";
-        }
-        ss << " ";
-        for (size_t j = 0; j < size % 16; ++j)
-        {
-            auto c = reinterpret_cast<uint8_t *>(data)[block * 16 + j];
-            if (c >= 0x20 && c <= 0x7E)
-            {
-                ss << static_cast<char>(c);
-            }
-            else
-            {
-                ss << ".";
-            }
-        }
-        ss << std::endl;
-        LogDebug("[=] %s", ss.str().c_str());
-    }
-    return {};
-}
 
 namespace android::ainput_event_dispatcher::detail::types
 {
