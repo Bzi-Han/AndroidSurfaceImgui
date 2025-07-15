@@ -340,7 +340,7 @@ namespace android::ainput_event_dispatcher::detail::apis
                 void *Read;
             };
 
-            inline static OffsetTable Offset;
+            inline static OffsetTable Offset{};
             inline static ApiTable Api;
         };
     } // namespace libgui
@@ -1080,23 +1080,27 @@ namespace android::ainput_event_dispatcher::detail
         static const bool PatchDefaultOffsetTable()
         {
 #if defined(__aarch64__)
-            auto instruction = *reinterpret_cast<uint32_t *>(apis::libgui::WindowInfo::Api.AddTouchableRegion);
-            LogInfo("[=] Instruction: %08X", instruction);
-
-            if (0x11000000 != (instruction & 0x7F800000))
+            for (size_t i = 0; i < 4; ++i)
             {
-                LogError("[!] Instruction is not valid!");
-                return false;
-            }
+                auto instruction = reinterpret_cast<uint32_t *>(apis::libgui::WindowInfo::Api.AddTouchableRegion)[i];
+                LogInfo("[=] Instruction: %08X", instruction);
 
-            apis::libgui::WindowInfo::Offset.mo_region = (instruction & 0x3FFC00) >> 10;
+                if (0x11000000 != (instruction & 0x7F800000))
+                {
+                    LogError("[!] Instruction is invalid!");
+                    continue;
+                }
+
+                apis::libgui::WindowInfo::Offset.mo_region = (instruction & 0x3FFC00) >> 10;
+                break;
+            }
 #elif defined(__x86_64__)
             auto instruction = *reinterpret_cast<uint32_t *>(apis::libgui::WindowInfo::Api.AddTouchableRegion);
             LogInfo("[=] Instruction: %08X", instruction);
 
             if ((12 > compat::SystemVersion ? 0x00C78348 : 0x00C78148) != (instruction & 0x00FFFFFF))
             {
-                LogError("[!] Instruction is not valid!");
+                LogError("[!] Instruction is invalid!");
                 return false;
             }
 
@@ -1106,6 +1110,9 @@ namespace android::ainput_event_dispatcher::detail
 #endif
 
             LogDebug("[=] mo_region: %zu", apis::libgui::WindowInfo::Offset.mo_region);
+
+            if (0 == apis::libgui::WindowInfo::Offset.mo_region)
+                return false;
 
             return true;
         }
