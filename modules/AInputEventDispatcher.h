@@ -38,6 +38,7 @@
 #include <string_view>
 #include <array>
 #include <vector>
+#include <unordered_map>
 #include <variant>
 
 #ifndef LOGTAG
@@ -1180,6 +1181,8 @@ namespace android::ainput_event_dispatcher::detail
                 throw std::runtime_error("Failed to open libgui.so or libutils.so");
             }
 
+            std::unordered_map<std::string_view, void **> checkFailedToResolveMap;
+
             const auto &[libutilsApis,
                          libguiApis,
                          libuiApis,
@@ -1187,67 +1190,76 @@ namespace android::ainput_event_dispatcher::detail
                          libinputApis] = ApiTableDescriptor::GetDefaultDescriptors();
             for (const auto &descriptor : libutilsApis)
             {
-                if (!descriptor.IsSupported(compat::SystemVersion))
+                if (!descriptor.IsSupported(compat::SystemVersion) || nullptr != *descriptor.storeToTarget)
                     continue;
 
                 *descriptor.storeToTarget = resolver.Resolve(libutils, descriptor.apiSignature);
                 if (nullptr == *descriptor.storeToTarget)
                 {
-                    LogError("[!] Version[Android %zu] [libutils] failed to resolve symbol: %s", compat::SystemVersion, descriptor.apiSignature);
-                    throw std::runtime_error("Failed to resolve symbol");
+                    LogDebug("[?] Version[Android %zu] [libutils] failed to resolve symbol: %s", compat::SystemVersion, descriptor.apiSignature);
+                    checkFailedToResolveMap[descriptor.apiSignature] = descriptor.storeToTarget;
                 }
             }
 
             for (const auto &descriptor : libguiApis)
             {
-                if (!descriptor.IsSupported(compat::SystemVersion))
+                if (!descriptor.IsSupported(compat::SystemVersion) || nullptr != *descriptor.storeToTarget)
                     continue;
 
                 *descriptor.storeToTarget = resolver.Resolve(libgui, descriptor.apiSignature);
                 if (nullptr == *descriptor.storeToTarget)
                 {
-                    LogError("[!] Version[Android %zu] [libgui] failed to resolve symbol: %s", compat::SystemVersion, descriptor.apiSignature);
-                    throw std::runtime_error("Failed to resolve symbol");
+                    LogDebug("[?] Version[Android %zu] [libgui] failed to resolve symbol: %s", compat::SystemVersion, descriptor.apiSignature);
+                    checkFailedToResolveMap[descriptor.apiSignature] = descriptor.storeToTarget;
                 }
             }
 
             for (const auto &descriptor : libuiApis)
             {
-                if (!descriptor.IsSupported(compat::SystemVersion))
+                if (!descriptor.IsSupported(compat::SystemVersion) || nullptr != *descriptor.storeToTarget)
                     continue;
 
                 *descriptor.storeToTarget = resolver.Resolve(libui, descriptor.apiSignature);
                 if (nullptr == *descriptor.storeToTarget)
                 {
-                    LogError("[!] Version[Android %zu] [libui] failed to resolve symbol: %s", compat::SystemVersion, descriptor.apiSignature);
-                    throw std::runtime_error("Failed to resolve symbol");
+                    LogDebug("[?] Version[Android %zu] [libui] failed to resolve symbol: %s", compat::SystemVersion, descriptor.apiSignature);
+                    checkFailedToResolveMap[descriptor.apiSignature] = descriptor.storeToTarget;
                 }
             }
 
             for (const auto &descriptor : libbinderApis)
             {
-                if (!descriptor.IsSupported(compat::SystemVersion))
+                if (!descriptor.IsSupported(compat::SystemVersion) || nullptr != *descriptor.storeToTarget)
                     continue;
 
                 *descriptor.storeToTarget = resolver.Resolve(libbinder, descriptor.apiSignature);
                 if (nullptr == *descriptor.storeToTarget)
                 {
-                    LogError("[!] Version[Android %zu] [libbinder] failed to resolve symbol: %s", compat::SystemVersion, descriptor.apiSignature);
-                    throw std::runtime_error("Failed to resolve symbol");
+                    LogDebug("[?] Version[Android %zu] [libbinder] failed to resolve symbol: %s", compat::SystemVersion, descriptor.apiSignature);
+                    checkFailedToResolveMap[descriptor.apiSignature] = descriptor.storeToTarget;
                 }
             }
 
             for (const auto &descriptor : libinputApis)
             {
-                if (!descriptor.IsSupported(compat::SystemVersion))
+                if (!descriptor.IsSupported(compat::SystemVersion) || nullptr != *descriptor.storeToTarget)
                     continue;
 
                 *descriptor.storeToTarget = resolver.Resolve(libinput, descriptor.apiSignature);
                 if (nullptr == *descriptor.storeToTarget)
                 {
-                    LogError("[!] Version[Android %zu] [libinput] failed to resolve symbol: %s", compat::SystemVersion, descriptor.apiSignature);
-                    throw std::runtime_error("Failed to resolve symbol");
+                    LogDebug("[?] Version[Android %zu] [libinput] failed to resolve symbol: %s", compat::SystemVersion, descriptor.apiSignature);
+                    checkFailedToResolveMap[descriptor.apiSignature] = descriptor.storeToTarget;
                 }
+            }
+
+            for (const auto &[signature, storeToTarget] : checkFailedToResolveMap)
+            {
+                if (nullptr != *storeToTarget)
+                    continue;
+
+                LogError("[!] Version[Android %zu] Unresolved — No workaround available symbol: %s", compat::SystemVersion, signature.data());
+                throw std::runtime_error("Failed to resolve symbol");
             }
 
             if (!ApiTableDescriptor::PatchDefaultOffsetTable())
