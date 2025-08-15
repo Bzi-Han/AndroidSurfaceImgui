@@ -6,6 +6,7 @@
 + 支持鼠标滚轮
 + 支持物理键盘输入
 + 支持横/竖屏自动切换
++ 支持防录屏
 
 在Android使用上API创建Surface并进行[Dear ImGui](https://github.com/ocornut/imgui.git)的绘制。
 
@@ -53,8 +54,7 @@
 
 ## TODO
 
-+ [x] 重构`ANativeWindowCreator.h`使得逻辑更加清晰，目前所有版本的兼容实现都挤在一起导致代码和日志都难以阅读(一坨)。
-+ [x] 设计一个宏用来更清晰的按版本路径调用对应的API。
++ [ ] 重构 `AImGui` 与 `ATouchEvent`，完全分离事件处理逻辑并规范导入与 `include_directories`。
 + [ ] 整理一下`Android`在`PC(Windows)`上的远程绘制Demo。
 
 ## 特别鸣谢赞助
