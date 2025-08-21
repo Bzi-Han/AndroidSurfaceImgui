@@ -55,7 +55,7 @@
 #define LogInfo_DEFINED 1
 #endif // !LogInfo
 
-namespace android::detail::types
+namespace android::anative_window_creator::detail::types
 {
     /**
      * The following types and structures are adapted from AOSP.
@@ -80,7 +80,7 @@ namespace android::detail::types
         R_8 = 0x38,
     };
 
-    enum class WindowFlags
+    enum class WindowFlags : uint32_t
     { // (keep in sync with SurfaceControl.java)
         eHidden = 0x00000004,
         eDestroyBackbuffer = 0x00000020,
@@ -100,7 +100,7 @@ namespace android::detail::types
         eFXSurfaceMask = 0x000F0000,
     };
 
-    enum class MetadataType
+    enum class MetadataType : uint32_t
     {
         OWNER_UID = 1,
         WINDOW_TYPE = 2,
@@ -110,6 +110,11 @@ namespace android::detail::types
         OWNER_PID = 6,
         DEQUEUE_TIME = 7,
         GAME_MODE = 8
+    };
+
+    enum
+    {
+        WINDOW_TYPE_DONT_SCREENSHOT = 441731
     };
 
     template <typename any_t>
@@ -133,9 +138,25 @@ namespace android::detail::types
             return nullptr != pointer;
         }
     };
-} // namespace android::detail::types
 
-namespace android::detail::types::ui
+    template <typename enum_t>
+    constexpr enum_t operator|(enum_t lhs, enum_t rhs)
+        requires std::is_enum_v<enum_t>
+    {
+        using underlying_t = std::underlying_type_t<enum_t>;
+
+        return static_cast<enum_t>(static_cast<underlying_t>(lhs) | static_cast<underlying_t>(rhs));
+    }
+
+    template <typename enum_t>
+    constexpr enum_t operator|=(enum_t &lhs, enum_t rhs)
+        requires std::is_enum_v<enum_t>
+    {
+        return (lhs = lhs | rhs);
+    }
+} // namespace android::anative_window_creator::detail::types
+
+namespace android::anative_window_creator::detail::types::ui
 {
     /**
      * The following types and structures are adapted from AOSP android::ui.
@@ -200,9 +221,9 @@ namespace android::detail::types::ui
     {
         uint64_t value;
     };
-} // namespace android::detail::types::ui
+} // namespace android::anative_window_creator::detail::types::ui
 
-namespace android::detail::types::apis::libutils
+namespace android::anative_window_creator::detail::types::apis::libutils
 {
     namespace generic
     {
@@ -212,9 +233,9 @@ namespace android::detail::types::apis::libutils
         using String8__Constructor = void *(*)(void *thiz, const char *const string);
         using String8__Destructor = void (*)(void *thiz);
     } // namespace generic
-} // namespace android::detail::types::apis::libutils
+} // namespace android::anative_window_creator::detail::types::apis::libutils
 
-namespace android::detail::types::apis::libgui
+namespace android::anative_window_creator::detail::types::apis::libgui
 {
     namespace v5_v7
     {
@@ -255,6 +276,11 @@ namespace android::detail::types::apis::libgui
         using SurfaceComposerClient__CreateSurface = StrongPointer<void> (*)(void *thiz, void *name, uint32_t w, uint32_t h, PixelFormat format, WindowFlags flags, void *parent, uint32_t windowType, uint32_t ownerUid);
     } // namespace v8_v9
 
+    namespace v8_v12
+    {
+        using SurfaceComposerClient__Transaction__Apply = int32_t (*)(void *thiz, bool synchronous);
+    } // namespace v8_v12
+
     namespace v10
     {
         // SurfaceComposerClient::createSurface(const String8& name, uint32_t w, uint32_t h,
@@ -263,6 +289,14 @@ namespace android::detail::types::apis::libgui
         //         LayerMetadata metadata)
         using SurfaceComposerClient__CreateSurface = StrongPointer<void> (*)(void *thiz, void *name, uint32_t w, uint32_t h, PixelFormat format, WindowFlags flags, void *parent, void *metadata);
     } // namespace v10
+
+    namespace v10_v12
+    {
+        // SurfaceComposerClient::Transaction& SurfaceComposerClient::Transaction::setInputWindowInfo(
+        //         const sp<SurfaceControl>& sc,
+        //         const InputWindowInfo& info)
+        using SurfaceComposerClient__Transaction__SetInputWindowInfo = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, void *inputWindowInfo);
+    } // namespace v10_v12
 
     namespace v11
     {
@@ -284,6 +318,18 @@ namespace android::detail::types::apis::libgui
         using SurfaceComposerClient__CreateSurface = StrongPointer<void> (*)(void *thiz, void *name, uint32_t w, uint32_t h, PixelFormat format, WindowFlags flags, void **parentHandle, void *metadata, uint32_t *outTransformHint);
     } // namespace v12_v13
 
+    namespace v13_v15
+    {
+        // SurfaceComposerClient::Transaction& SurfaceComposerClient::Transaction::setInputWindowInfo(
+        //         const sp<SurfaceControl>& sc, const WindowInfo& info)
+        using SurfaceComposerClient__Transaction__SetInputWindowInfo = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, void *windowInfo);
+    } // namespace v13_v15
+
+    namespace v13_infinite
+    {
+        using SurfaceComposerClient__Transaction__Apply = int32_t (*)(void *thiz, bool synchronous, bool oneWay);
+    } // namespace v13_infinite
+
     namespace v14_infinite
     {
         // SurfaceComposerClient::createSurface(const String8& name, uint32_t w, uint32_t h,
@@ -294,19 +340,17 @@ namespace android::detail::types::apis::libgui
         using SurfaceComposerClient__CreateSurface = StrongPointer<void> (*)(void *thiz, void *name, uint32_t w, uint32_t h, PixelFormat format, WindowFlags flags, void **parentHandle, void *metadata, uint32_t *outTransformHint);
     } // namespace v14_infinite
 
-    namespace v8_v12
+    namespace v16_infinite
     {
-        using SurfaceComposerClient__Transaction__Apply = int32_t (*)(void *thiz, bool synchronous);
-    } // namespace v8_v12
-
-    namespace v13_infinite
-    {
-        using SurfaceComposerClient__Transaction__Apply = int32_t (*)(void *thiz, bool synchronous, bool oneWay);
-    } // namespace v13_infinite
+        // SurfaceComposerClient::Transaction& SurfaceComposerClient::Transaction::setInputWindowInfo(
+        //         const sp<SurfaceControl>& sc, sp<WindowInfoHandle> info)
+        using SurfaceComposerClient__Transaction__SetInputWindowInfo = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, void *windowInfoHandle);
+    } // namespace v16_infinite
 
     namespace generic
     {
         using LayerMetadata__Constructor = void (*)(void *thiz);
+        using LayerMetadata__SetInt32 = void (*)(void *thiz, MetadataType key, int32_t value);
 
         using SurfaceComposerClient__Constructor = void *(*)(void *thiz);
         using SurfaceComposerClient__MirrorSurface = StrongPointer<void> (*)(void *thiz, void *mirrorFromSurface);
@@ -318,6 +362,7 @@ namespace android::detail::types::apis::libgui
         using SurfaceComposerClient__GetPhysicalDisplayIds__Static = std::vector<ui::PhysicalDisplayId> (*)();
         using SurfaceComposerClient__GetPhysicalDisplayToken__Static = StrongPointer<void> (*)(ui::PhysicalDisplayId displayId);
 
+        using SurfaceComposerClient__Transaction__CopyConstructor = void *(*)(void *thiz, void *other);
         using SurfaceComposerClient__Transaction__Constructor = void *(*)(void *thiz);
         using SurfaceComposerClient__Transaction__SetLayer = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, int32_t z);
         using SurfaceComposerClient__Transaction__SetTrustedOverlay = void *(*)(void *thiz, StrongPointer<void> &surfaceControl, bool isTrustedOverlay);
@@ -330,10 +375,11 @@ namespace android::detail::types::apis::libgui
 
         using SurfaceControl__GetSurface = StrongPointer<void> (*)(void *thiz);
         using SurfaceControl__DisConnect = void (*)(void *thiz);
+        using SurfaceControl__GetParentingLayer = StrongPointer<void> (*)(void *thiz);
     } // namespace generic
-} // namespace android::detail::types::apis::libgui
+} // namespace android::anative_window_creator::detail::types::apis::libgui
 
-namespace android::detail::types::apis
+namespace android::anative_window_creator::detail::types::apis
 {
     struct ApiDescriptor
     {
@@ -347,9 +393,9 @@ namespace android::detail::types::apis
             return currentVersion >= minVersion && currentVersion <= maxVersion;
         }
     };
-} // namespace android::detail::types::apis
+} // namespace android::anative_window_creator::detail::types::apis
 
-namespace android::detail::apis
+namespace android::anative_window_creator::detail::apis
 {
     namespace libutils
     {
@@ -383,6 +429,7 @@ namespace android::detail::apis
             struct ApiTable
             {
                 void *Constructor;
+                void *SetInt32;
             };
 
             inline static ApiTable Api;
@@ -415,6 +462,7 @@ namespace android::detail::apis
         {
             struct ApiTable
             {
+                void *CopyConstructor;
                 void *Constructor;
                 void *SetLayer;
                 void *SetTrustedOverlay;
@@ -424,6 +472,7 @@ namespace android::detail::apis
                 void *Reparent;
                 void *SetMatrix;
                 void *SetPosition;
+                void *SetInputWindowInfo;
                 void *Apply;
             };
 
@@ -436,6 +485,7 @@ namespace android::detail::apis
             {
                 void *GetSurface;
                 void *DisConnect;
+                void *GetParentingLayer;
 
                 void *SetLayer;
             };
@@ -453,9 +503,9 @@ namespace android::detail::apis
             inline static ApiTable Api;
         };
     } // namespace libgui
-} // namespace android::detail::apis
+} // namespace android::anative_window_creator::detail::apis
 
-namespace android::detail::compat
+namespace android::anative_window_creator::detail::compat
 {
     constexpr size_t SupportedMinVersion = 5;
 
@@ -534,11 +584,15 @@ namespace android::detail::compat
         // libgui
         if constexpr ("LayerMetadata::Constructor" == descriptor)
             return reinterpret_cast<types::apis::libgui::generic::LayerMetadata__Constructor>(apis::libgui::LayerMetadata::Api.Constructor);
+        if constexpr ("LayerMetadata::SetInt32" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::LayerMetadata__SetInt32>(apis::libgui::LayerMetadata::Api.SetInt32);
 
         if constexpr ("SurfaceControl::GetSurface" == descriptor)
             return reinterpret_cast<types::apis::libgui::generic::SurfaceControl__GetSurface>(apis::libgui::SurfaceControl::Api.GetSurface);
         if constexpr ("SurfaceControl::DisConnect" == descriptor)
             return reinterpret_cast<types::apis::libgui::generic::SurfaceControl__DisConnect>(apis::libgui::SurfaceControl::Api.DisConnect);
+        if constexpr ("SurfaceControl::GetParentingLayer" == descriptor)
+            return reinterpret_cast<types::apis::libgui::generic::SurfaceControl__GetParentingLayer>(apis::libgui::SurfaceControl::Api.GetParentingLayer);
         if constexpr ("SurfaceControl::SetLayer" == descriptor)
             return reinterpret_cast<types::apis::libgui::v5_v7::SurfaceControl__SetLayer>(apis::libgui::SurfaceControl::Api.SetLayer);
 
@@ -546,7 +600,12 @@ namespace android::detail::compat
             return reinterpret_cast<types::apis::libgui::v5_v7::Surface__DisConnect>(apis::libgui::Surface::Api.DisConnect);
 
         if constexpr ("SurfaceComposerClient::Transaction::Constructor" == descriptor)
-            return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__Constructor>(apis::libgui::SurfaceComposerClient::Transaction::Api.Constructor);
+        {
+            if constexpr (12 > descriptor.version)
+                return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__CopyConstructor>(apis::libgui::SurfaceComposerClient::Transaction::Api.CopyConstructor);
+            else
+                return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__Constructor>(apis::libgui::SurfaceComposerClient::Transaction::Api.Constructor);
+        }
         if constexpr ("SurfaceComposerClient::Transaction::SetLayer" == descriptor)
             return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetLayer>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetLayer);
         if constexpr ("SurfaceComposerClient::Transaction::SetLayerStack" == descriptor)
@@ -563,6 +622,15 @@ namespace android::detail::compat
             return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetMatrix>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetMatrix);
         if constexpr ("SurfaceComposerClient::Transaction::SetPosition" == descriptor)
             return reinterpret_cast<types::apis::libgui::generic::SurfaceComposerClient__Transaction__SetPosition>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetPosition);
+        if constexpr ("SurfaceComposerClient::Transaction::SetInputWindowInfo" == descriptor)
+        {
+            if constexpr (10 <= descriptor.version && 12 >= descriptor.version)
+                return reinterpret_cast<types::apis::libgui::v10_v12::SurfaceComposerClient__Transaction__SetInputWindowInfo>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetInputWindowInfo);
+            else if constexpr (13 <= descriptor.version && 15 >= descriptor.version)
+                return reinterpret_cast<types::apis::libgui::v13_v15::SurfaceComposerClient__Transaction__SetInputWindowInfo>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetInputWindowInfo);
+            else if constexpr (16 <= descriptor.version)
+                return reinterpret_cast<types::apis::libgui::v16_infinite::SurfaceComposerClient__Transaction__SetInputWindowInfo>(apis::libgui::SurfaceComposerClient::Transaction::Api.SetInputWindowInfo);
+        }
         if constexpr ("SurfaceComposerClient::Transaction::Apply" == descriptor)
         {
             if constexpr (8 <= descriptor.version && 12 >= descriptor.version)
@@ -610,9 +678,9 @@ namespace android::detail::compat
             return reinterpret_cast<types::apis::libgui::v5_v7::SurfaceComposerClient__CloseGlobalTransaction__Static>(apis::libgui::SurfaceComposerClient::Api.CloseGlobalTransaction);
     }
 
-} // namespace android::detail::compat
+} // namespace android::anative_window_creator::detail::compat
 
-namespace android::detail::compat
+namespace android::anative_window_creator::detail::compat
 {
     static size_t SystemVersion = 13;
 
@@ -646,6 +714,12 @@ namespace android::detail::compat
                 ApiInvoker<"LayerMetadata::Constructor@v10">()(data);
         }
 
+        void SetInt32(types::MetadataType key, int32_t value)
+        {
+            if (9 < SystemVersion)
+                ApiInvoker<"LayerMetadata::SetInt32@v10">()(data, key, value);
+        }
+
         operator void *()
         {
             if (9 < SystemVersion)
@@ -662,13 +736,21 @@ namespace android::detail::compat
     struct SurfaceControl
     {
         void *data;
+        int32_t width, height;
+        bool skipScreenshot;
 
-        SurfaceControl()
-            : data(nullptr)
+        SurfaceControl(void *data = nullptr)
+            : data(data),
+              width(0),
+              height(0),
+              skipScreenshot(false)
         {
         }
-        SurfaceControl(void *data)
-            : data(data)
+        SurfaceControl(void *data, int32_t width, int32_t height, bool skipScreenshot)
+            : data(data),
+              width(width),
+              height(height),
+              skipScreenshot(skipScreenshot)
         {
         }
 
@@ -694,6 +776,23 @@ namespace android::detail::compat
             auto result = ApiInvoker<"SurfaceControl::GetSurface">()(data);
 
             return reinterpret_cast<Surface *>(reinterpret_cast<size_t>(result.pointer) + sizeof(std::max_align_t) / 2);
+        }
+
+        types::StrongPointer<void> GetParentingLayer()
+        {
+            if (nullptr == data)
+                return {};
+
+            if (12 > SystemVersion)
+            {
+                types::StrongPointer<void> result;
+
+                result.pointer = data;
+
+                return result;
+            }
+
+            return ApiInvoker<"SurfaceControl::GetParentingLayer">()(data);
         }
 
         void DisConnect()
@@ -732,7 +831,10 @@ namespace android::detail::compat
 
         SurfaceComposerClientTransaction()
         {
-            ApiInvoker<"SurfaceComposerClient::Transaction::Constructor">()(data);
+            if (12 > SystemVersion)
+                ApiInvoker<"SurfaceComposerClient::Transaction::Constructor@v11">()(data, data);
+            else
+                ApiInvoker<"SurfaceComposerClient::Transaction::Constructor@v12">()(data);
         }
 
         void *SetLayer(types::StrongPointer<void> &surfaceControl, int32_t z)
@@ -775,6 +877,11 @@ namespace android::detail::compat
             ApiInvoker<"SurfaceComposerClient::Transaction::SetPosition">()(data, surfaceControl, x, y);
         }
 
+        void SetInputWindowInfo(types::StrongPointer<void> &surfaceControl, void *windowInfo)
+        {
+            ApiInvoker<"SurfaceComposerClient::Transaction::SetInputWindowInfo@v10">()(data, surfaceControl, windowInfo);
+        }
+
         int32_t Apply(bool synchronous, bool oneWay)
         {
             if (13 > SystemVersion)
@@ -794,7 +901,7 @@ namespace android::detail::compat
             ApiInvoker<"RefBase::IncStrong">()(data, this);
         }
 
-        SurfaceControl CreateSurface(const char *name, int32_t width, int32_t height, types::WindowFlags windowFlags = {})
+        SurfaceControl CreateSurface(const char *name, int32_t width, int32_t height, types::WindowFlags windowFlags = {}, bool skipScreenshot = false)
         {
             static void *parentHandle = nullptr;
 
@@ -816,28 +923,44 @@ namespace android::detail::compat
             case 8:
             case 9:
             {
-                uint32_t windowType = 0;
+                uint32_t windowType = skipScreenshot ? types::WINDOW_TYPE_DONT_SCREENSHOT : 0;
 
                 result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v9">()(data, windowName, width, height, pixelFormat, windowFlags, parentHandle, windowType, 0);
                 break;
             }
             case 10:
             {
+                if (skipScreenshot)
+                    layerMetadata.SetInt32(types::MetadataType::WINDOW_TYPE, types::WINDOW_TYPE_DONT_SCREENSHOT);
+
                 result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v10">()(data, windowName, width, height, pixelFormat, windowFlags, parentHandle, layerMetadata);
                 break;
             }
             case 11:
             {
+                if (skipScreenshot)
+                    layerMetadata.SetInt32(types::MetadataType::WINDOW_TYPE, types::WINDOW_TYPE_DONT_SCREENSHOT);
+
                 result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v11">()(data, windowName, width, height, pixelFormat, windowFlags, parentHandle, layerMetadata, nullptr);
                 break;
             }
             case 12:
             case 13:
             {
+                using types::operator|=;
+
+                if (skipScreenshot)
+                    windowFlags |= types::WindowFlags::eSkipScreenshot;
+
                 result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v13">()(data, windowName, width, height, pixelFormat, windowFlags, &parentHandle, layerMetadata, nullptr);
             }
             default:
             {
+                using types::operator|=;
+
+                if (skipScreenshot)
+                    windowFlags |= types::WindowFlags::eSkipScreenshot;
+
                 result = ApiInvoker<"SurfaceComposerClient::CreateSurface@v14">()(data, windowName, width, height, pixelFormat, windowFlags, &parentHandle, layerMetadata, nullptr);
                 break;
             }
@@ -858,7 +981,7 @@ namespace android::detail::compat
                 CloseGlobalTransaction(false);
             }
 
-            return {result.get()};
+            return {result.get(), width, height, skipScreenshot};
         }
 
         SurfaceControl MirrorSurface(SurfaceControl &surface, uint32_t layerStack)
@@ -881,6 +1004,16 @@ namespace android::detail::compat
 
             if (14 > compat::SystemVersion)
                 return {};
+            if (surface.skipScreenshot)
+            {
+                LogInfo("[=] Surface not need mirror: skipScreenshot is true");
+                return {};
+            }
+            if (0 == surface.width || 0 == surface.height)
+            {
+                LogInfo("[=] Surface not need mirror: width or height is 0");
+                return {};
+            }
 
             auto mirrorSurface = ApiInvoker<"SurfaceComposerClient::MirrorSurface@v14">()(data, surface.data);
             if (nullptr == mirrorSurface.get())
@@ -889,21 +1022,8 @@ namespace android::detail::compat
                 return {};
             }
 
-            int32_t width = -1, height = -1;
-            while (-1 == width || -1 == height)
-            {
-                detail::types::ui::DisplayState displayInfo{};
-
-                if (!GetDisplayInfo(&displayInfo))
-                    break;
-
-                width = displayInfo.layerStackSpaceRect.width;
-                height = displayInfo.layerStackSpaceRect.height;
-
-                break;
-            }
             auto mirrorRootName = "MirrorRoot@" + std::to_string(layerStack);
-            auto mirrorRootSurface = CreateSurface(mirrorRootName.data(), width, height, types::WindowFlags::eNoColorFill);
+            auto mirrorRootSurface = CreateSurface(mirrorRootName.data(), surface.width, surface.height, types::WindowFlags::eNoColorFill);
             if (!mirrorRootSurface)
             {
                 LogError("[-] Failed to create mirror root surface: %u", layerStack);
@@ -991,16 +1111,23 @@ namespace android::detail::compat
         {
             ApiInvoker<"SurfaceComposerClient::CloseGlobalTransaction@v7">()(synchronous);
         }
-    };
-} // namespace android::detail::compat
 
-namespace android::detail
+        SurfaceComposerClientTransaction &GetDefaultTransaction()
+        {
+            static SurfaceComposerClientTransaction transaction;
+
+            return transaction;
+        }
+    };
+} // namespace android::anative_window_creator::detail::compat
+
+namespace android::anative_window_creator::detail
 {
     struct ApiTableDescriptor
     {
         static const auto GetDefaultDescriptors()
         {
-            using namespace android::detail::types::apis;
+            using namespace android::anative_window_creator::detail::types::apis;
 
             return std::make_pair(
                 // libutils
@@ -1018,6 +1145,9 @@ namespace android::detail
                     // LayerMetadata
                     ApiDescriptor{10, 13, &apis::libgui::LayerMetadata::Api.Constructor, "_ZN7android13LayerMetadataC2Ev"},
                     ApiDescriptor{14, UINT_MAX, &apis::libgui::LayerMetadata::Api.Constructor, "_ZN7android3gui13LayerMetadataC2Ev"},
+
+                    ApiDescriptor{10, 13, &apis::libgui::LayerMetadata::Api.SetInt32, "_ZN7android13LayerMetadata8setInt32Eji"},
+                    ApiDescriptor{14, UINT_MAX, &apis::libgui::LayerMetadata::Api.SetInt32, "_ZN7android3gui13LayerMetadata8setInt32Eji"},
 
                     // SurfaceComposerClient
                     ApiDescriptor{5, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.Constructor, "_ZN7android21SurfaceComposerClientC2Ev"},
@@ -1041,6 +1171,7 @@ namespace android::detail
                     ApiDescriptor{11, UINT_MAX, &apis::libgui::SurfaceComposerClient::Api.GetDisplayState, "_ZN7android21SurfaceComposerClient15getDisplayStateERKNS_2spINS_7IBinderEEEPNS_2ui12DisplayStateE"},
 
                     // SurfaceComposerClient::Transaction
+                    ApiDescriptor{11, 11, &apis::libgui::SurfaceComposerClient::Transaction::Api.CopyConstructor, "_ZN7android21SurfaceComposerClient11TransactionC2ERKS1_"},
                     ApiDescriptor{12, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.Constructor, "_ZN7android21SurfaceComposerClient11TransactionC2Ev"},
                     ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetLayer, "_ZN7android21SurfaceComposerClient11Transaction8setLayerERKNS_2spINS_14SurfaceControlEEEi"},
                     ApiDescriptor{12, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetTrustedOverlay, "_ZN7android21SurfaceComposerClient11Transaction17setTrustedOverlayERKNS_2spINS_14SurfaceControlEEEb"},
@@ -1056,6 +1187,10 @@ namespace android::detail
                     ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetMatrix, "_ZN7android21SurfaceComposerClient11Transaction9setMatrixERKNS_2spINS_14SurfaceControlEEEffff"},
                     ApiDescriptor{9, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetPosition, "_ZN7android21SurfaceComposerClient11Transaction11setPositionERKNS_2spINS_14SurfaceControlEEEff"},
 
+                    ApiDescriptor{10, 12, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetInputWindowInfo, "_ZN7android21SurfaceComposerClient11Transaction18setInputWindowInfoERKNS_2spINS_14SurfaceControlEEERKNS_15InputWindowInfoE"},
+                    ApiDescriptor{13, 15, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetInputWindowInfo, "_ZN7android21SurfaceComposerClient11Transaction18setInputWindowInfoERKNS_2spINS_14SurfaceControlEEERKNS_3gui10WindowInfoE"},
+                    ApiDescriptor{16, UINT_MAX, &apis::libgui::SurfaceComposerClient::Transaction::Api.SetInputWindowInfo, "_ZN7android21SurfaceComposerClient11Transaction18setInputWindowInfoERKNS_2spINS_14SurfaceControlEEENS2_INS_3gui16WindowInfoHandleEEE"},
+
                     // SurfaceComposerClient::GlobalTransaction
                     ApiDescriptor{5, 8, &apis::libgui::SurfaceComposerClient::Api.OpenGlobalTransaction, "_ZN7android21SurfaceComposerClient21openGlobalTransactionEv"},
                     ApiDescriptor{5, 8, &apis::libgui::SurfaceComposerClient::Api.CloseGlobalTransaction, "_ZN7android21SurfaceComposerClient22closeGlobalTransactionEb"},
@@ -1066,6 +1201,8 @@ namespace android::detail
 
                     ApiDescriptor{5, 7, &apis::libgui::Surface::Api.DisConnect, "_ZN7android7Surface10disconnectEi"},
                     ApiDescriptor{7, UINT_MAX, &apis::libgui::SurfaceControl::Api.DisConnect, "_ZN7android14SurfaceControl10disconnectEv"},
+
+                    ApiDescriptor{12, UINT_MAX, &apis::libgui::SurfaceControl::Api.GetParentingLayer, "_ZN7android14SurfaceControl17getParentingLayerEv"},
 
                     ApiDescriptor{5, 5, &apis::libgui::SurfaceControl::Api.SetLayer, "_ZN7android14SurfaceControl8setLayerEi"},
                     ApiDescriptor{6, 7, &apis::libgui::SurfaceControl::Api.SetLayer, "_ZN7android14SurfaceControl8setLayerEj"},
@@ -1272,7 +1409,7 @@ namespace android::detail
 
         return result;
     }
-} // namespace android::detail
+} // namespace android::anative_window_creator::detail
 
 namespace android
 {
@@ -1286,18 +1423,26 @@ namespace android
             int32_t height;
         };
 
-    public:
-        static void SetupCustomApiResolver(const detail::ApiResolver::ResolverImpl &resolver)
+        struct CreateOptions
         {
-            detail::ApiResolver::Resolve(resolver);
+            const char *name;
+            int32_t width;
+            int32_t height;
+            bool skipScreenshot;
+        };
+
+    public:
+        static void SetupCustomApiResolver(const anative_window_creator::detail::ApiResolver::ResolverImpl &resolver)
+        {
+            anative_window_creator::detail::ApiResolver::Resolve(resolver);
         }
 
     public:
-        static detail::compat::SurfaceComposerClient &GetComposerInstance()
+        static anative_window_creator::detail::compat::SurfaceComposerClient &GetComposerInstance()
         {
-            detail::ApiResolver::Resolve();
+            anative_window_creator::detail::ApiResolver::Resolve();
 
-            static detail::compat::SurfaceComposerClient surfaceComposerClient;
+            static anative_window_creator::detail::compat::SurfaceComposerClient surfaceComposerClient;
 
             return surfaceComposerClient;
         }
@@ -1305,7 +1450,7 @@ namespace android
         static DisplayInfo GetDisplayInfo()
         {
             auto &surfaceComposerClient = GetComposerInstance();
-            detail::types::ui::DisplayState displayInfo{};
+            anative_window_creator::detail::types::ui::DisplayState displayInfo{};
 
             if (!surfaceComposerClient.GetDisplayInfo(&displayInfo))
                 return {};
@@ -1317,13 +1462,15 @@ namespace android
             };
         }
 
-        static ANativeWindow *Create(const char *name, int32_t width = -1, int32_t height = -1)
+        static ANativeWindow *Create(const CreateOptions &options = {.name = "AImGui"})
         {
             auto &surfaceComposerClient = GetComposerInstance();
 
-            while (-1 == width || -1 == height)
+            int32_t width = options.width;
+            int32_t height = options.height;
+            while (0 == width || 0 == height)
             {
-                detail::types::ui::DisplayState displayInfo{};
+                anative_window_creator::detail::types::ui::DisplayState displayInfo{};
 
                 if (!surfaceComposerClient.GetDisplayInfo(&displayInfo))
                     break;
@@ -1334,7 +1481,7 @@ namespace android
                 break;
             }
 
-            auto surfaceControl = surfaceComposerClient.CreateSurface(name, width, height);
+            auto surfaceControl = surfaceComposerClient.CreateSurface(options.name, width, height, {}, options.skipScreenshot);
             auto nativeWindow = reinterpret_cast<ANativeWindow *>(surfaceControl.GetSurface());
 
             m_cachedSurfaceControl.emplace(nativeWindow, std::move(surfaceControl));
@@ -1346,7 +1493,7 @@ namespace android
             if (!m_cachedSurfaceControl.contains(nativeWindow))
                 return;
 
-            m_cachedSurfaceControl[nativeWindow].DestroySurface(reinterpret_cast<detail::compat::Surface *>(nativeWindow));
+            m_cachedSurfaceControl[nativeWindow].DestroySurface(reinterpret_cast<anative_window_creator::detail::compat::Surface *>(nativeWindow));
             m_cachedSurfaceControl.erase(nativeWindow);
         }
 
@@ -1354,9 +1501,21 @@ namespace android
         {
             static std::chrono::steady_clock::time_point lastTime{};
 
-            if (14 > detail::compat::SystemVersion)
+            if (14 > anative_window_creator::detail::compat::SystemVersion)
                 return;
             if (std::chrono::steady_clock::now() - lastTime < std::chrono::seconds(1))
+                return;
+
+            // Check if have surfaces need to mirror
+            static std::vector<anative_window_creator::detail::compat::SurfaceControl *> surfacesNeedToMirror;
+
+            surfacesNeedToMirror.clear();
+            for (auto &[_, surfaceControl] : m_cachedSurfaceControl)
+            {
+                if (!surfaceControl.skipScreenshot)
+                    surfacesNeedToMirror.push_back(&surfaceControl);
+            }
+            if (surfacesNeedToMirror.empty())
                 return;
 
             // Run "dumpsys display" and get result
@@ -1373,10 +1532,10 @@ namespace android
                 dumpDisplayResult += buffer;
             pclose(pipe);
 
-            static std::unordered_map<uint32_t, detail::compat::SurfaceControl> cachedLayerStackMirrorSurfaces;
+            static std::unordered_map<uint32_t, std::vector<anative_window_creator::detail::compat::SurfaceControl>> cachedLayerStackMirrorSurfaces;
             static std::unordered_set<uint32_t> cachedLayerStackScales;
 
-            auto dumpDisplayInfos = detail::ParseDumpDisplayInfo(dumpDisplayResult);
+            auto dumpDisplayInfos = anative_window_creator::detail::ParseDumpDisplayInfo(dumpDisplayResult);
             for (auto &displayInfo : dumpDisplayInfos)
             {
                 // Update multi display layer scale
@@ -1395,12 +1554,12 @@ namespace android
                 {
                     LogInfo("[=] New display layerstack detected: [%s] -> %u", displayInfo.uniqueId.data(), displayInfo.currentLayerStack);
 
-                    for (auto &[_, surfaceControl] : m_cachedSurfaceControl)
+                    for (auto surfaceControl : surfacesNeedToMirror)
                     {
-                        auto mirrorLayer = GetComposerInstance().MirrorSurface(surfaceControl, displayInfo.currentLayerStack);
+                        auto mirrorLayer = GetComposerInstance().MirrorSurface(*surfaceControl, displayInfo.currentLayerStack);
 
                         LogInfo("[+] Mirror layer created: %p", mirrorLayer.data);
-                        cachedLayerStackMirrorSurfaces.emplace(displayInfo.currentLayerStack, std::move(mirrorLayer));
+                        cachedLayerStackMirrorSurfaces[displayInfo.currentLayerStack].emplace_back(std::move(mirrorLayer));
                     }
                 }
 
@@ -1416,26 +1575,29 @@ namespace android
                                 displayInfo.currentLayerStackRect.bottom);
 
                         auto &composerInstance = GetComposerInstance();
-                        auto &mirrorLayer = cachedLayerStackMirrorSurfaces.at(displayInfo.currentLayerStack);
-                        auto transformParams = detail::CalcMirrorLayerTransform(
+                        auto &mirrorLayers = cachedLayerStackMirrorSurfaces.at(displayInfo.currentLayerStack);
+                        auto transformParams = anative_window_creator::detail::CalcMirrorLayerTransform(
                             builtinDisplayWidth,
                             builtinDisplayHeight,
                             displayInfo.currentLayerStackRect.right,
                             displayInfo.currentLayerStackRect.bottom);
 
-                        composerInstance.ZoomSurface(mirrorLayer, transformParams.widthScale, transformParams.heightScale);
+                        for (auto &mirrorLayer : mirrorLayers)
+                        {
+                            composerInstance.ZoomSurface(mirrorLayer, transformParams.widthScale, transformParams.heightScale);
 
-                        if (!transformParams.isAspectRatioSimilar)
-                            composerInstance.MoveSurface(mirrorLayer, transformParams.offsetX, transformParams.offsetY);
+                            if (!transformParams.isAspectRatioSimilar)
+                                composerInstance.MoveSurface(mirrorLayer, transformParams.offsetX, transformParams.offsetY);
 
-                        cachedLayerStackScales.emplace(displayInfo.currentLayerStack);
-                        LogInfo("[+] Transform mirror layer:%p similar:%d width:%f height:%f x:%f y:%f",
-                                mirrorLayer.data,
-                                transformParams.isAspectRatioSimilar,
-                                transformParams.widthScale,
-                                transformParams.heightScale,
-                                transformParams.offsetX,
-                                transformParams.offsetY);
+                            cachedLayerStackScales.emplace(displayInfo.currentLayerStack);
+                            LogInfo("[+] Transform mirror layer:%p similar:%d width:%f height:%f x:%f y:%f",
+                                    mirrorLayer.data,
+                                    transformParams.isAspectRatioSimilar,
+                                    transformParams.widthScale,
+                                    transformParams.heightScale,
+                                    transformParams.offsetX,
+                                    transformParams.offsetY);
+                        }
                     }
                 }
             }
@@ -1443,8 +1605,21 @@ namespace android
             lastTime = std::chrono::steady_clock::now();
         }
 
+        static void UpdateWindowInfo(ANativeWindow *nativeWindow, void *windowInfo)
+        {
+            if (!m_cachedSurfaceControl.contains(nativeWindow))
+                return;
+
+            auto &transaction = GetComposerInstance().GetDefaultTransaction();
+            auto &surfaceControl = m_cachedSurfaceControl.at(nativeWindow);
+            auto parentingLayer = surfaceControl.GetParentingLayer();
+
+            transaction.SetInputWindowInfo(parentingLayer, windowInfo);
+            transaction.Apply(true, false);
+        }
+
     private:
-        inline static std::unordered_map<ANativeWindow *, detail::compat::SurfaceControl> m_cachedSurfaceControl;
+        inline static std::unordered_map<ANativeWindow *, anative_window_creator::detail::compat::SurfaceControl> m_cachedSurfaceControl;
     };
 } // namespace android
 
