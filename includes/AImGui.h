@@ -52,7 +52,9 @@ namespace android
         };
 
     public:
-        AImGui() : AImGui(Options{}) {}
+        AImGui() : AImGui(Options{})
+        {
+        }
         AImGui(const Options &options);
         ~AImGui();
 
@@ -60,6 +62,8 @@ namespace android
         void EndFrame();
 
         void ProcessInputEvent();
+
+        void SetupWindowInfo(void *windowInfo);
 
         constexpr operator bool() const
         {
@@ -97,6 +101,6 @@ namespace android
         EGLContext m_eglContext = EGL_NO_CONTEXT;
         ImGuiContext *m_imguiContext = nullptr;
     };
-}
+} // namespace android
 
 #endif // !A_IMGUI_H

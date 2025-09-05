@@ -615,6 +615,11 @@ namespace android
         }
     }
 
+    void AImGui::SetupWindowInfo(void *windowInfo)
+    {
+        ANativeWindowCreator::UpdateWindowInfo(m_nativeWindow, windowInfo);
+    }
+
     bool AImGui::InitEnvironment()
     {
         // Initialize rpc
