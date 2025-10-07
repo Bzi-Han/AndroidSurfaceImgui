@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 3.13.0)
 
+set(ANDROID_NDK $ENV{ANDROID_NDK})
+if (ANDROID_NDK)
+    file(TO_CMAKE_PATH ${ANDROID_NDK} ANDROID_NDK)
+    set(CMAKE_TOOLCHAIN_FILE "${ANDROID_NDK}/build/cmake/android.toolchain.cmake")
+    set(ANDROID_ABI arm64-v8a CACHE STRING "target build architecture")
+    set(ANDROID_PLATFORM 24 CACHE STRING "target android api level")
+endif ()
+
 project(AndroidSurfaceImgui)
 
 option(ANDROID_SURFACE_IMGUI_BUILD_STATIC "Build AImGui static library." ON)
