@@ -7,6 +7,8 @@
 #include <ImGui-SharedDrawData/modules/ImGuiSharedDrawData.h>
 #include <zstd.h>
 
+size_t android::anative_window_creator::detail::compat::SystemVersion = 13;
+
 static ImGuiKey KeyCodeToImGuiKey(int32_t keyCode)
 {
     switch (keyCode)

@@ -682,7 +682,8 @@ namespace android::anative_window_creator::detail::compat
 
 namespace android::anative_window_creator::detail::compat
 {
-    static size_t SystemVersion = 13;
+    // NOTE: No default implementation
+    extern size_t SystemVersion;
 
     struct String8
     {
@@ -1071,6 +1072,7 @@ namespace android::anative_window_creator::detail::compat
                 defaultDisplay = ApiInvoker<"SurfaceComposerClient::GetBuiltInDisplay@v9">()(types::ui::DisplayType::DisplayIdMain);
             else
             {
+                LogDebug("apis::libgui::SurfaceComposerClient::Api.GetInternalDisplayToken: %p %zu %d", apis::libgui::SurfaceComposerClient::Api.GetInternalDisplayToken, SystemVersion, 14 > SystemVersion);
                 if (14 > SystemVersion)
                     defaultDisplay = ApiInvoker<"SurfaceComposerClient::GetInternalDisplayToken@v13">()();
                 else
